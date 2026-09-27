@@ -24,8 +24,8 @@ import java.util.function.Consumer
 object ModLibationFluids {
     private val types = DeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, MOD_ID)
     private val fluids = DeferredRegister.create(ForgeRegistries.FLUIDS, MOD_ID)
-    private val still = ResourceLocation("minecraft", "block/water_still")
-    private val flowingTexture = ResourceLocation("minecraft", "block/water_flow")
+    private val STILL_TEXTURE = ResourceLocation("minecraft", "block/water_still")
+    private val FLOWING_TEXTURE = ResourceLocation("minecraft", "block/water_flow")
 
     private val entries = linkedMapOf<String, RegistryObject<FlowingFluid>>()
 
@@ -52,8 +52,8 @@ object ModLibationFluids {
                 .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)) {
                 override fun initializeClient(consumer: Consumer<IClientFluidTypeExtensions>) {
                     consumer.accept(object : IClientFluidTypeExtensions {
-                        override fun getStillTexture(): ResourceLocation = still
-                        override fun getFlowingTexture(): ResourceLocation = flowingTexture
+                        override fun getStillTexture(): ResourceLocation = STILL_TEXTURE
+                        override fun getFlowingTexture(): ResourceLocation = FLOWING_TEXTURE
                         override fun getTintColor(): Int = tint
                     })
                 }
