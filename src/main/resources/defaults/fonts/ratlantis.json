@@ -10,12 +10,13 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
+  "salienceAspects": ["control", "work", "endurance", "robustness"],
   "cultivationPalette": {
-    "pathBlocks": ["minecraft:cut_copper", "minecraft:copper_block", "minecraft:raw_copper_block"],
-    "cultivationBlocks": ["minecraft:copper_block"],
-    "structureBlocks": ["minecraft:raw_copper_block", "minecraft:copper_block", "minecraft:cut_copper"],
-    "trophyBlocks": ["minecraft:lantern", "minecraft:gold_block", "minecraft:emerald_block"],
-    "decorations": ["minecraft:lantern", "minecraft:potted_flowering_azalea_bush", "minecraft:green_candle", "minecraft:white_candle"]
+    "pathBlocks": ["minecraft:oxidized_cut_copper", "rats:marbled_cheese_brick"],
+    "cultivationBlocks": ["minecraft:oxidized_copper"],
+    "structureBlocks": ["rats:marbled_cheese_brick", "rats:marbled_cheese_tile", "rats:marbled_cheese_pillar"],
+    "trophyBlocks": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_rat_head", "minecraft:lantern"],
+    "decorations": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_rat_head", "minecraft:green_candle"]
   },
   "rewardTableId": "no_bonus",
   "maxCharge": 15000,

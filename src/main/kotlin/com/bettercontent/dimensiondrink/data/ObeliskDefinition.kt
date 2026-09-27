@@ -18,6 +18,7 @@ data class ObeliskDefinition(
     val enabled: Boolean = true,
     val worldgenWeight: Double = 1.0,
     val worldgenFamilyId: String? = null,
+    val salienceAspects: List<String> = emptyList(),
     val rewardTableId: String = "default",
     val cultivationPalette: CultivationPaletteDefinition? = null,
     val graveyardPalette: CultivationPaletteDefinition? = null,

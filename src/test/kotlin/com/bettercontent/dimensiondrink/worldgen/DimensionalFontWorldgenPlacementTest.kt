@@ -97,7 +97,7 @@ class DimensionalFontWorldgenPlacementTest {
 
     @Test
     fun defaultFontDecorationsKeepAzaleasPotted() {
-        listOf("overworld", "bumblezone", "ratlantis").forEach { fontId ->
+        listOf("overworld", "end").forEach { fontId ->
             val definition = assertNotNull(
                 javaClass.classLoader.getResource("defaults/fonts/$fontId.json")
             ).readText()

@@ -225,7 +225,7 @@ class ObeliskBlockEntity(
     }
 
     private fun serverAmbientTick(tickLevel: ServerLevel, tickPos: BlockPos) {
-        if (blockState.`is`(ModBlocks.RETURN_FONT.get())) return
+        if (blockState.`is`(ModBlocks.RETURN_FONT.get()) || isNaturallyGenerated) return
         advancePassiveRegeneration(tickLevel.gameTime)
         if (chargeStoredInternal <= 0) return
         val pulseOffset = java.lang.Math.floorMod(tickPos.asLong(), PASSIVE_COPPER_RENEWAL_INTERVAL)

@@ -131,6 +131,10 @@ object ObeliskDataManager {
             runPlayerChargePerSecond = definition.runPlayerChargePerSecond?.coerceAtLeast(0.0) ?: 40.0,
             requiredNamespace = requiredNamespace,
             worldgenFamilyId = stringOrNull(definition.worldgenFamilyId) ?: "altar",
+            salienceAspects = (definition.salienceAspects ?: emptyList())
+                .mapNotNull { stringOrNull(it)?.lowercase() }
+                .filter { it in SALIENCE_ASPECTS }
+                .distinct(),
             rewardTableId = stringOrNull(definition.rewardTableId) ?: "default",
             cultivationPalette = (definition.cultivationPalette ?: definition.graveyardPalette)?.let { palette ->
                 palette.copy(
@@ -259,4 +263,8 @@ object ObeliskDataManager {
     }
 
     private val ALWAYS_AVAILABLE_NAMESPACES = setOf("minecraft", "forge", MOD_ID)
+    private val SALIENCE_ASPECTS = setOf(
+        "impact", "tempo", "work", "mobility",
+        "endurance", "robustness", "renewal", "control"
+    )
 }

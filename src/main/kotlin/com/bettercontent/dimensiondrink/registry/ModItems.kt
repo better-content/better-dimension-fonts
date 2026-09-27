@@ -13,4 +13,5 @@ object ModItems {
     val OBELISK: RegistryObject<Item> = REGISTRY.register("dimensional_font") { BlockItem(ModBlocks.OBELISK.get(), Item.Properties()) }
     val RETURN_FONT: RegistryObject<Item> = REGISTRY.register("return_seal") { BlockItem(ModBlocks.RETURN_FONT.get(), Item.Properties()) }
     val RETURN_PAD: RegistryObject<Item> = RETURN_FONT
+    val FONT_POURER: RegistryObject<Item> = REGISTRY.register("font_pourer") { BlockItem(ModBlocks.FONT_POURER.get(), Item.Properties()) }
 }

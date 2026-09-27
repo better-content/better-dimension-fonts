@@ -13,5 +13,6 @@ object ObeliskClientEvents {
     @JvmStatic
     fun registerRenderers(event: EntityRenderersEvent.RegisterRenderers) {
         event.registerBlockEntityRenderer(ModBlockEntities.OBELISK.get(), ::ObeliskBlockEntityRenderer)
+        event.registerBlockEntityRenderer(ModBlockEntities.FONT_POURER.get(), ::FontPourerRenderer)
     }
 }

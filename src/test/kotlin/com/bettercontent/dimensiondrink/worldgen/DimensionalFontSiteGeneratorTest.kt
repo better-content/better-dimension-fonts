@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 class DimensionalFontSiteGeneratorTest {
     @Test
     fun currentLayoutAddsTwoStairRungsOnEveryCardinalApproach() {
-        assertEquals(3, DimensionalFontSiteGenerator.LAYOUT_VERSION)
+        assertEquals(4, DimensionalFontSiteGenerator.LAYOUT_VERSION)
         val center = BlockPos(8, 70, 8)
         Direction.Plane.HORIZONTAL.forEach { direction ->
             assertEquals(
@@ -31,12 +31,12 @@ class DimensionalFontSiteGeneratorTest {
     }
 
     @Test
-    fun pathColumnsAreBoundedAndCardinal() {
-        assertFalse(DimensionalFontSiteGenerator.isPathColumn(5, 0))
-        assertTrue(DimensionalFontSiteGenerator.isPathColumn(6, 0))
-        assertTrue(DimensionalFontSiteGenerator.isPathColumn(-1, 24))
-        assertFalse(DimensionalFontSiteGenerator.isPathColumn(2, 12))
-        assertFalse(DimensionalFontSiteGenerator.isPathColumn(0, 25))
+    fun approachIsAClosedRingWithoutCrossRoads() {
+        assertFalse(DimensionalFontSiteGenerator.isRingColumn(5, 0))
+        assertTrue(DimensionalFontSiteGenerator.isRingColumn(10, 0))
+        assertTrue(DimensionalFontSiteGenerator.isRingColumn(6, 8))
+        assertFalse(DimensionalFontSiteGenerator.isRingColumn(0, 24))
+        assertFalse(DimensionalFontSiteGenerator.isRingColumn(2, 12))
     }
 
     @Test

@@ -10,10 +10,11 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
+  "salienceAspects": ["impact", "endurance"],
   "cultivationPalette": {
-    "pathBlocks": ["minecraft:cut_copper", "minecraft:copper_block", "minecraft:raw_copper_block"],
-    "cultivationBlocks": ["minecraft:copper_block"],
-    "structureBlocks": ["minecraft:raw_copper_block", "minecraft:copper_block", "minecraft:cut_copper"],
+    "pathBlocks": ["minecraft:oxidized_cut_copper", "minecraft:nether_bricks"],
+    "cultivationBlocks": ["minecraft:oxidized_copper"],
+    "structureBlocks": ["minecraft:nether_bricks", "minecraft:polished_blackstone_bricks", "minecraft:basalt"],
     "trophyBlocks": ["minecraft:soul_lantern", "minecraft:white_candle", "minecraft:crimson_roots", "minecraft:warped_roots"],
     "decorations": ["minecraft:soul_lantern", "minecraft:crimson_roots", "minecraft:warped_roots", "minecraft:lime_candle", "minecraft:white_candle"]
   },

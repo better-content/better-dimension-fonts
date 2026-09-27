@@ -29,10 +29,18 @@ import net.minecraftforge.eventbus.api.SubscribeEvent
 
 object DimensionalFontMapTrades {
     private const val SOLD_TYPES_TAG = "dimension_drink:font_map_sold_types"
+    private const val ALLOWED_TYPES_TAG = "dimension_drink:font_map_allowed_types"
 
     /** Stable caller API for continuing an authored seller's existing map rotation. */
     @JvmStatic
     fun soldDefinitionIds(sellerData: CompoundTag): Set<String> = readSoldTypes(sellerData)
+
+    /** The economy sets this whenever an authored seller is assigned an aspect theme. */
+    @JvmStatic
+    fun setSellerDefinitionIds(sellerData: CompoundTag, allowedTypes: Set<String>) {
+        writeStringSet(sellerData, ALLOWED_TYPES_TAG, allowedTypes)
+        writeSoldTypes(sellerData, readSoldTypes(sellerData).intersect(allowedTypes))
+    }
 
     /** Stable JVM entry point used by the pack's wandering-trader integration. */
     @JvmStatic
@@ -55,9 +63,10 @@ object DimensionalFontMapTrades {
         origin: BlockPos,
         villagerXp: Int,
         currency: Item,
-        excludedTypes: Set<String> = emptySet()
+        excludedTypes: Set<String> = emptySet(),
+        allowedTypes: Set<String> = DimensionalFontMapListing.enabledDefinitionIds()
     ): MerchantOffer? = DimensionalFontMapListing(villagerXp)
-        .nextOffer(level, origin, excludedTypes, currency)
+        .nextOffer(level, origin, excludedTypes, currency, allowedTypes)
 
     @SubscribeEvent
     fun onTradeCompleted(event: TradeWithVillagerEvent) {
@@ -68,11 +77,13 @@ object DimensionalFontMapTrades {
         val villager = event.abstractVillager
         val level = villager.level() as? ServerLevel ?: return
         FontLocationSavedData.get(level.server).recordMapSale(soldDefinitionId)
-        val eligibleTypes = DimensionalFontMapListing.enabledDefinitionIds()
+        val configured = readStringSet(villager.persistentData, ALLOWED_TYPES_TAG)
+        val eligibleTypes = if (configured.isEmpty()) DimensionalFontMapListing.enabledDefinitionIds()
+            else configured.intersect(DimensionalFontMapListing.enabledDefinitionIds())
         val soldTypes = advanceSoldTypes(readSoldTypes(villager.persistentData), soldDefinitionId, eligibleTypes)
         writeSoldTypes(villager.persistentData, soldTypes)
 
-        val nextMap = DimensionalFontMapListing(0).nextMap(level, villager.blockPosition(), soldTypes)
+        val nextMap = DimensionalFontMapListing(0).nextMap(level, villager.blockPosition(), soldTypes, eligibleTypes)
         if (nextMap == null) {
             offer.setToOutOfStock()
         } else {
@@ -109,15 +120,20 @@ object DimensionalFontMapTrades {
         offer.result.count = nextMap.count
     }
 
-    internal fun readSoldTypes(tag: CompoundTag): Set<String> {
-        val values = tag.getList(SOLD_TYPES_TAG, Tag.TAG_STRING.toInt())
+    internal fun readSoldTypes(tag: CompoundTag): Set<String> = readStringSet(tag, SOLD_TYPES_TAG)
+
+    private fun readStringSet(tag: CompoundTag, key: String): Set<String> {
+        val values = tag.getList(key, Tag.TAG_STRING.toInt())
         return (0 until values.size).mapTo(linkedSetOf(), values::getString)
     }
 
-    private fun writeSoldTypes(tag: CompoundTag, soldTypes: Set<String>) {
+    private fun writeSoldTypes(tag: CompoundTag, soldTypes: Set<String>) =
+        writeStringSet(tag, SOLD_TYPES_TAG, soldTypes)
+
+    private fun writeStringSet(tag: CompoundTag, key: String, valuesToWrite: Set<String>) {
         val values = ListTag()
-        soldTypes.sorted().forEach { values.add(StringTag.valueOf(it)) }
-        tag.put(SOLD_TYPES_TAG, values)
+        valuesToWrite.sorted().forEach { values.add(StringTag.valueOf(it)) }
+        tag.put(key, values)
     }
 }
 
@@ -130,8 +146,13 @@ class DimensionalFontMapListing(
         return null
     }
 
-    internal fun nextMap(level: ServerLevel, origin: BlockPos, excludedTypes: Set<String>): ItemStack? {
-        val eligibleTypes = enabledDefinitionIds()
+    internal fun nextMap(
+        level: ServerLevel,
+        origin: BlockPos,
+        excludedTypes: Set<String>,
+        allowedTypes: Set<String> = enabledDefinitionIds()
+    ): ItemStack? {
+        val eligibleTypes = enabledDefinitionIds().intersect(allowedTypes)
         if (eligibleTypes.isEmpty()) return null
         val destination = FontLocationSavedData.get(level.server)
             .nearest(level, origin, eligibleTypes, excludedTypes) ?: return null
@@ -143,8 +164,9 @@ class DimensionalFontMapListing(
         level: ServerLevel,
         origin: BlockPos,
         excludedTypes: Set<String>,
-        currency: Item
-    ): MerchantOffer? = nextMap(level, origin, excludedTypes)?.let { map ->
+        currency: Item,
+        allowedTypes: Set<String>
+    ): MerchantOffer? = nextMap(level, origin, excludedTypes, allowedTypes)?.let { map ->
         createOffer(map, villagerXp, currency)
     }
 
@@ -181,6 +203,14 @@ class DimensionalFontMapListing(
                     )
                 )
             )
+            if (definition.salienceAspects.isNotEmpty()) {
+                lore.add(StringTag.valueOf(Component.Serializer.toJson(
+                    Component.translatable(
+                        "item.dimension_drink.dimensional_font_map.aspects",
+                        definition.salienceAspects.joinToString(" · ") { it.replaceFirstChar(Char::uppercase) }
+                    )
+                )))
+            }
             map.getOrCreateTagElement("display").put("Lore", lore)
             map.orCreateTag.putString(DEFINITION_TAG, definition.id)
             return map

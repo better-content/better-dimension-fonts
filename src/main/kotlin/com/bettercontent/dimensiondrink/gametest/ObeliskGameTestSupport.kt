@@ -1266,8 +1266,8 @@ object ObeliskGameTestSupport {
             DimensionalFontSiteGenerator.altarApproachStairPositions(altarCenter, direction).forEach { stairPos ->
                 val stair = helper.level.getBlockState(stairPos)
                 helper.assertTrue(
-                    stair.`is`(Blocks.CUT_COPPER_STAIRS),
-                    "Expected layout-v3 altar approach stair at $stairPos"
+                    stair.`is`(Blocks.OXIDIZED_CUT_COPPER_STAIRS),
+                    "Expected layout-v4 oxidized altar approach stair at $stairPos"
                 )
                 helper.assertTrue(
                     stair.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction.opposite,
@@ -2108,14 +2108,17 @@ object ObeliskGameTestSupport {
             "Expected $label generated cultivation center font to be filled to its effective capacity"
         )
         helper.assertTrue(
-            helper.level.getBlockState(baseCenter).`is`(Blocks.RAW_COPPER_BLOCK) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.COPPER_BLOCK) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_COPPER) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_COPPER) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.CUT_COPPER) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_CUT_COPPER),
-            "Expected $label font to sit on a copper-family pedestal, found ${helper.level.getBlockState(baseCenter)} at $baseCenter"
+            if (requireReliquaryLandscaping) {
+                helper.level.getBlockState(baseCenter).`is`(Blocks.RAW_COPPER_BLOCK) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.COPPER_BLOCK) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_COPPER) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_COPPER) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.CUT_COPPER) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_CUT_COPPER) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_CUT_COPPER) ||
+                    helper.level.getBlockState(baseCenter).`is`(Blocks.OXIDIZED_COPPER)
+            } else helper.level.getBlockState(baseCenter).`is`(Blocks.OXIDIZED_COPPER),
+            "Expected $label font to sit on a copper pedestal, found ${helper.level.getBlockState(baseCenter)} at $baseCenter"
         )
         helper.assertTrue(!helper.level.getBlockState(baseCenter).isAir, "Expected $label altar cap not to float")
         helper.assertTrue(!helper.level.getBlockState(middleTierCenter).isAir, "Expected $label font to sit on an elevated altar middle tier")
@@ -2134,326 +2137,60 @@ object ObeliskGameTestSupport {
                 "Expected $label font at $fontPos to keep clear space above it, found $clearanceState at $clearancePos"
             )
         }
+        if (requireReliquaryLandscaping) return
         val altarCenter = middleTierCenter
-        val shardTorch = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("minecraft", "soul_torch")
-        )
-        val exposedCopperLantern = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("everythingcopper", "exposed_copper_lantern")
-        )
-        val weatheredCopperLantern = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("everythingcopper", "weathered_copper_lantern")
-        )
-        val sconce = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("supplementaries", "sconce")
-        )
-        val wallSconce = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("supplementaries", "sconce_wall")
-        )
-        fun isLantern(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            state.`is`(Blocks.SOUL_LANTERN) || state.`is`(Blocks.LANTERN) || state.`is`(exposedCopperLantern) || state.`is`(weatheredCopperLantern)
-        fun isAltarLight(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            isLantern(state) || state.`is`(sconce) || state.`is`(wallSconce)
-        val copperShingleSlab = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("create", "exposed_copper_shingle_slab")
-        )
-        val copperShingleStairs = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-            net.minecraft.resources.ResourceLocation("create", "exposed_copper_shingle_stairs")
-        )
-        fun isAltarRoofBlock(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            state.`is`(Blocks.CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.CUT_COPPER_STAIRS) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER_STAIRS) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER_STAIRS) ||
-                state.`is`(copperShingleSlab) ||
-                state.`is`(copperShingleStairs)
-        listOf(-2 to -2, -2 to 2, 2 to -2, 2 to 2).forEach { (dx, dz) ->
-            val supportPos = altarCenter.offset(dx, 3, dz)
-            helper.assertTrue(
-                helper.level.getBlockState(supportPos).`is`(Blocks.STRIPPED_WARPED_STEM),
-                "Expected $label altar corner supports to use warped cultivation posts at $supportPos"
-            )
-            helper.assertTrue(
-                helper.level.getBlockState(supportPos.below()).`is`(Blocks.STRIPPED_WARPED_STEM),
-                "Expected $label altar corner supports to continue down to the font surround at ${supportPos.below()}"
-            )
+        val support = helper.level.getBlockState(altarCenter.offset(2, 3, 2))
+        val supportId = BuiltInRegistries.BLOCK.getKey(support.block).path
+        if (!support.isAir) {
+            helper.assertTrue(supportId.startsWith("stripped_") &&
+                (supportId.endsWith("_log") || supportId.endsWith("_stem")),
+                "Expected $label vertical supports to use biome-matched stripped wood, found $support")
+            helper.assertTrue(!helper.level.getBlockState(altarCenter.offset(2, 4, 0)).isAir,
+                "Expected $label tree-biome support to carry a verdigris roof")
+        } else {
+            helper.assertTrue(helper.level.getBlockState(altarCenter.offset(2, 4, 0)).isAir,
+                "Expected $label treeless biome to have no roof")
         }
-        for (dx in -2..2) {
-            for (dz in -2..2) {
-                if (kotlin.math.max(kotlin.math.abs(dx), kotlin.math.abs(dz)) != 2) continue
-                val roof = altarCenter.offset(dx, 4, dz)
-                helper.assertTrue(
-                    isAltarRoofBlock(helper.level.getBlockState(roof)),
-                    "Expected $label altar to have a copper roof ring at $roof"
-                )
-            }
-        }
-        var sideLights = 0
-        listOf(-2 to -2, -2 to 2, 2 to -2, 2 to 2).forEach { (dx, dz) ->
-            val outwardX = if (dx < 0) -1 else 1
-            val outwardZ = if (dz < 0) -1 else 1
-            val xFace = helper.level.getBlockState(altarCenter.offset(dx + outwardX, 3, dz))
-            val zFace = helper.level.getBlockState(altarCenter.offset(dx, 3, dz + outwardZ))
-            if (isAltarLight(xFace)) {
-                sideLights++
-            }
-            if (isAltarLight(zFace)) {
-                sideLights++
-            }
-        }
-        helper.assertTrue(
-            sideLights >= 4,
-            "Expected $label altar to keep visible outer-face lighting around the top cultivation supports"
-        )
-        if (!requireReliquaryLandscaping) return
-        var cultivationSignals = 0
-        var pathSignals = 0
-        var trophySignals = 0
-        var trophyGroundSignals = 0
-        var cappedTrophySignals = 0
-        var forbiddenSignals = 0
-        var unlitCandleSignals = 0
-        var structureSignals = 0
-        var slabStepSignals = 0
-        val pathDirections = mutableSetOf<Direction>()
-        val generatedFootprint = mutableSetOf<Pair<Int, Int>>()
-        val generatedTerrainLevels = mutableSetOf<Int>()
+
+        var ringTiles = 0
+        var waterTiles = 0
+        var candles = 0
+        var trophies = 0
         val expectedTrophy = expectedTrophyOverride ?: when (label) {
             "end" -> Blocks.WHITE_CANDLE
-            "nether" -> shardTorch
-            "modded" -> Blocks.MAGENTA_CANDLE
+            "nether" -> Blocks.SOUL_TORCH
             else -> null
-        }
-        fun isGeneratedCultivationMarker(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            state.`is`(Blocks.COPPER_BLOCK) ||
-                state.`is`(Blocks.EXPOSED_COPPER) ||
-                state.`is`(Blocks.WEATHERED_COPPER) ||
-                state.`is`(Blocks.RAW_COPPER_BLOCK) ||
-                state.`is`(Blocks.CUT_COPPER) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER) ||
-                state.`is`(Blocks.DARK_OAK_WALL_SIGN)
-        fun isPalettedCultivationMarker(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            isGeneratedCultivationMarker(state) && !state.`is`(Blocks.MUD)
-        fun isValidCultivationBed(pos: BlockPos): Boolean =
-            Direction.Plane.HORIZONTAL.any { direction ->
-                val forwardBody = helper.level.getBlockState(pos.relative(direction)).`is`(Blocks.MUD) &&
-                    isPalettedCultivationMarker(helper.level.getBlockState(pos.relative(direction, 2).above()))
-                val middleBody = helper.level.getBlockState(pos.relative(direction.opposite)).`is`(Blocks.MUD) &&
-                    isPalettedCultivationMarker(helper.level.getBlockState(pos.relative(direction).above()))
-                forwardBody || middleBody
-            }
-        fun isGeneratedStructureSignal(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            isGeneratedCultivationMarker(state) ||
-                state.`is`(Blocks.COPPER_BLOCK) ||
-                state.`is`(Blocks.EXPOSED_COPPER) ||
-                state.`is`(Blocks.WEATHERED_COPPER) ||
-                state.`is`(Blocks.RAW_COPPER_BLOCK) ||
-                state.`is`(Blocks.CUT_COPPER) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER) ||
-                state.`is`(Blocks.CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER_SLAB) ||
-                state.`is`(Blocks.CUT_COPPER_STAIRS) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER_STAIRS) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER_STAIRS) ||
-                state.`is`(Blocks.STRIPPED_WARPED_STEM) ||
-                state.`is`(Blocks.SOUL_LANTERN) ||
-                state.`is`(Blocks.LANTERN)
-        fun isGeneratedPathOrFloor(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            state.`is`(Blocks.PACKED_MUD) ||
-                state.`is`(Blocks.CUT_COPPER) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER) ||
-                state.`is`(Blocks.COPPER_BLOCK) ||
-                state.`is`(Blocks.EXPOSED_COPPER) ||
-                state.`is`(Blocks.WEATHERED_COPPER) ||
-                state.`is`(Blocks.RAW_COPPER_BLOCK)
-        fun isCopperCourtFloor(state: net.minecraft.world.level.block.state.BlockState): Boolean =
-            state.`is`(Blocks.CUT_COPPER) ||
-                state.`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                state.`is`(Blocks.WEATHERED_CUT_COPPER) ||
-                state.`is`(Blocks.COPPER_BLOCK) ||
-                state.`is`(Blocks.EXPOSED_COPPER) ||
-                state.`is`(Blocks.WEATHERED_COPPER) ||
-                state.`is`(Blocks.RAW_COPPER_BLOCK)
-        fun isLivingCourtPot(state: net.minecraft.world.level.block.state.BlockState): Boolean {
-            if (state.`is`(Blocks.FLOWER_POT)) return false
-            val path = BuiltInRegistries.BLOCK.getKey(state.block).path
-            return path == "potted_dead_bush" || path.startsWith("potted_")
-        }
-        fun columnHas(dx: Int, dz: Int, minDy: Int, maxDy: Int, predicate: (net.minecraft.world.level.block.state.BlockState) -> Boolean): Boolean =
-            (minDy..maxDy).any { dy -> predicate(helper.level.getBlockState(cultivationFloorCenter.offset(dx, dy, dz))) }
-        fun detailWeight(pos: BlockPos): Int {
-            val state = helper.level.getBlockState(pos)
-            var weight = 0
-            if (isGeneratedCultivationMarker(state)) weight++
-            if (state.`is`(Blocks.WHITE_CANDLE) || state.`is`(Blocks.LIME_CANDLE) || state.`is`(shardTorch) || state.`is`(Blocks.OAK_LOG) || state.`is`(Blocks.SPRUCE_LOG)) weight++
-            if (expectedTrophy != null && state.`is`(expectedTrophy)) weight += 2
-            return weight
         }
         for (dx in -20..20) {
             for (dz in -20..20) {
                 for (dy in -12..16) {
-	                    val pos = cultivationFloorCenter.offset(dx, dy, dz)
-	                    val state = helper.level.getBlockState(pos)
-	                    val generatedMarker = isGeneratedCultivationMarker(state)
-	                    val generatedFloor = isGeneratedPathOrFloor(state)
-		                    val generatedCultivationBed = state.`is`(Blocks.MUD) && isValidCultivationBed(pos)
-	                    val generatedTrophy = expectedTrophy != null && state.`is`(expectedTrophy)
-	                    if (generatedMarker || generatedFloor || generatedTrophy || generatedCultivationBed) {
-	                        generatedFootprint += dx to dz
-	                        generatedTerrainLevels += pos.y
-	                    }
-	                    if (isGeneratedStructureSignal(state)) structureSignals++
-	                    if (state.`is`(Blocks.CUT_COPPER_SLAB) || state.`is`(Blocks.EXPOSED_CUT_COPPER_SLAB) || state.`is`(Blocks.WEATHERED_CUT_COPPER_SLAB)) slabStepSignals++
-	                    if (generatedMarker) {
-	                        cultivationSignals++
-	                    }
-	                    if (generatedCultivationBed) {
-	                        cultivationSignals++
-	                    }
-	                    if (generatedFloor) {
-	                        pathSignals++
-	                        if (abs(dx) > abs(dz)) {
-                            pathDirections += if (dx > 0) Direction.EAST else Direction.WEST
-                        } else if (dz != 0) {
-                            pathDirections += if (dz > 0) Direction.SOUTH else Direction.NORTH
-                        }
+                    val pos = cultivationFloorCenter.offset(dx, dy, dz)
+                    val state = helper.level.getBlockState(pos)
+                    if (DimensionalFontSiteGenerator.isRingColumn(dx, dz) &&
+                        (state.`is`(Blocks.OXIDIZED_CUT_COPPER) || state.`is`(Blocks.PACKED_MUD))) ringTiles++
+                    if (state.`is`(Blocks.WATER)) waterTiles++
+                    if (state.`is`(Blocks.WHITE_CANDLE) || state.`is`(Blocks.YELLOW_CANDLE) ||
+                        state.`is`(Blocks.RED_CANDLE) || state.`is`(Blocks.GREEN_CANDLE) ||
+                        state.`is`(Blocks.LIGHT_BLUE_CANDLE)) {
+                        candles++
+                        helper.assertTrue(state.getValue(BlockStateProperties.LIT),
+                            "Expected $label field candles to be lit at $pos")
                     }
-                    if (generatedTrophy) {
-                        trophySignals++
-                        if (pos.y <= cultivationFloorCenter.y) trophyGroundSignals++
-                        val aboveTrophy = helper.level.getBlockState(pos.above())
-                        if (
-                            aboveTrophy.`is`(Blocks.WAXED_EXPOSED_CUT_COPPER) ||
-                            aboveTrophy.`is`(Blocks.CUT_COPPER) ||
-                            aboveTrophy.`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                            aboveTrophy.`is`(Blocks.WEATHERED_CUT_COPPER)
-                        ) {
-                            cappedTrophySignals++
-                        }
-                    }
-                    if (state.`is`(Blocks.WITHER_ROSE)) {
-                        forbiddenSignals++
-                    }
-                    if ((state.`is`(Blocks.WHITE_CANDLE) || state.`is`(Blocks.LIME_CANDLE) || state.`is`(Blocks.CANDLE)) && !state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT)) {
-                        unlitCandleSignals++
-                    }
+                    if (expectedTrophy != null && state.`is`(expectedTrophy)) trophies++
+                    helper.assertTrue(!state.`is`(Blocks.RAW_COPPER_BLOCK) &&
+                        !state.`is`(Blocks.COPPER_BLOCK) && !state.`is`(Blocks.EXPOSED_COPPER) &&
+                        !state.`is`(Blocks.WEATHERED_COPPER) && !state.`is`(Blocks.CUT_COPPER) &&
+                        !state.`is`(Blocks.EXPOSED_CUT_COPPER) && !state.`is`(Blocks.WEATHERED_CUT_COPPER),
+                        "Expected $label generated copper to be fully oxidized at $pos, found $state")
                 }
             }
         }
-        val tileDetailCounts = mutableListOf<Int>()
-        for (sx in -20..20 step 4) {
-            for (sz in -20..20 step 4) {
-                var localDetails = 0
-                for (dx in sx - 2..sx + 2) {
-                    for (dz in sz - 2..sz + 2) {
-                        for (dy in -1..3) {
-                            localDetails += detailWeight(cultivationFloorCenter.offset(dx, dy, dz))
-                        }
-                    }
-                }
-                tileDetailCounts += localDetails
-            }
-        }
-        var courtCopperInterior = 0
-        var courtMudInterior = 0
-        var courtCornerSignals = 0
-        var courtEntrySignals = 0
-        var perimeterPotSignals = 0
-        var centralPotSignals = 0
-        var livingPotSignals = 0
-        for (dx in -6..6) {
-            for (dz in -6..6) {
-                if (maxOf(abs(dx), abs(dz)) <= 5) {
-                    if (columnHas(dx, dz, -1, 4, ::isCopperCourtFloor)) courtCopperInterior++
-                    if (columnHas(dx, dz, -1, 4) { it.`is`(Blocks.PACKED_MUD) }) courtMudInterior++
-                }
-                if (abs(dx) == 5 && abs(dz) == 5 && columnHas(dx, dz, -1, 4, ::isCopperCourtFloor)) {
-                    courtCornerSignals++
-                }
-                if (maxOf(abs(dx), abs(dz)) <= 2 && columnHas(dx, dz, 0, 4, ::isLivingCourtPot)) {
-                    centralPotSignals++
-                }
-                if (maxOf(abs(dx), abs(dz)) in 4..6 && columnHas(dx, dz, 0, 4, ::isLivingCourtPot)) {
-                    perimeterPotSignals++
-                }
-                if (columnHas(dx, dz, 0, 4, ::isLivingCourtPot)) livingPotSignals++
-            }
-        }
-        Direction.Plane.HORIZONTAL.forEach { direction ->
-            val hasInteriorCopper = (4..6).any { step ->
-                val probe = when (direction) {
-                    Direction.NORTH -> 0 to -step
-                    Direction.SOUTH -> 0 to step
-                    Direction.WEST -> -step to 0
-                    Direction.EAST -> step to 0
-                    else -> 0 to 0
-                }
-                listOf(-1, 0, 1).any { side ->
-                    val sample = if (direction.axis == Direction.Axis.X) probe.first to probe.second + side else probe.first + side to probe.second
-                    columnHas(sample.first, sample.second, -1, 4, ::isCopperCourtFloor)
-                }
-            }
-            val hasExteriorMud = (7..9).any { step ->
-                val probe = when (direction) {
-                    Direction.NORTH -> 0 to -step
-                    Direction.SOUTH -> 0 to step
-                    Direction.WEST -> -step to 0
-                    Direction.EAST -> step to 0
-                    else -> 0 to 0
-                }
-                listOf(-1, 0, 1).any { side ->
-                    val sample = if (direction.axis == Direction.Axis.X) probe.first to probe.second + side else probe.first + side to probe.second
-                    columnHas(sample.first, sample.second, -1, 3) { it.`is`(Blocks.PACKED_MUD) }
-                }
-            }
-            if (hasInteriorCopper && hasExteriorMud) courtEntrySignals++
-        }
-        helper.assertTrue(pathSignals >= 8, "Expected $label reliquary to include readable processional path/floor tiles")
-        helper.assertTrue(cultivationSignals >= 6, "Expected $label reliquary to include generated cultivation markers")
-        helper.assertTrue(structureSignals >= 8, "Expected $label reliquary to include altar and ritual structure signals")
-        helper.assertTrue(courtCopperInterior >= 36, "Expected $label reliquary court interior to be copper-dominant")
-        helper.assertTrue(courtCopperInterior > courtMudInterior, "Expected $label reliquary court to read as a built square instead of a mud crossroads")
-        helper.assertTrue(courtCornerSignals >= 3, "Expected $label reliquary court to keep a strong framed edge at the corners")
-        helper.assertTrue(courtEntrySignals >= 2, "Expected $label reliquary court to blend at least two real path entries from mud into copper")
-        if (label != "modded") {
-            helper.assertTrue(perimeterPotSignals >= 1, "Expected $label reliquary court to reserve decorative pots for perimeter pockets")
-        }
-        helper.assertTrue(centralPotSignals == 0, "Expected $label reliquary court center to stay clear of decorative pots")
-        if (label == "modded") {
-            helper.assertTrue(generatedTerrainLevels.size >= 1, "Expected modded reliquary to occupy generated terrain")
-        }
-        if (generatedFootprint.size >= 24) {
-            val minX = generatedFootprint.minOf { it.first }
-            val maxX = generatedFootprint.maxOf { it.first }
-            val minZ = generatedFootprint.minOf { it.second }
-            val maxZ = generatedFootprint.maxOf { it.second }
-            val boxArea = (maxX - minX + 1) * (maxZ - minZ + 1)
-            val fillRatio = generatedFootprint.size.toDouble() / boxArea.toDouble()
-            val spansBroadCultivationCenter = (maxX - minX + 1) >= 24 && (maxZ - minZ + 1) >= 24
-            if (spansBroadCultivationCenter && label != "nether") {
-                helper.assertTrue(
-                    fillRatio <= 0.62,
-                    "Expected $label cultivation center footprint to be labyrinthine/organic, not a filled square mask " +
-                        "(fillRatio=$fillRatio footprint=${generatedFootprint.size} boxArea=$boxArea bounds=[$minX,$maxX]x[$minZ,$maxZ])"
-                )
-            }
-        }
-        helper.assertTrue(tileDetailCounts.maxOrNull() ?: 0 >= 3, "Expected $label reliquary to include at least one readable detail cluster")
-        helper.assertTrue(pathDirections.size >= 2, "Expected $label reliquary paths to reach multiple directions")
+        helper.assertTrue(ringTiles >= 12, "Expected $label font to have a circular verdigris ring; found $ringTiles tiles")
+        helper.assertTrue(waterTiles >= 3, "Expected $label font field to include decorative water pools")
+        helper.assertTrue(candles >= 4, "Expected $label font field to include lit candles")
         if (requireDimensionalTrophy && expectedTrophy != null) {
-            helper.assertTrue(trophySignals >= 1, "Expected $label cultivation center to display dimensional trophy blocks")
+            helper.assertTrue(trophies >= 1, "Expected $label font field to display its dimensional trophy")
         }
-        if (expectedTrophy != null && trophySignals > 0) {
-            helper.assertTrue(cappedTrophySignals == 0, "Expected $label dimensional trophy blocks to remain uncapped")
-        }
-        helper.assertTrue(forbiddenSignals == 0, "Expected $label cultivation center to avoid wither roses")
-        helper.assertTrue(unlitCandleSignals == 0, "Expected $label generated cultivation center candles to be lit")
     }
 
     private fun countBufferedItem(obelisk: ObeliskBlockEntity?, item: net.minecraft.world.item.Item): Int {

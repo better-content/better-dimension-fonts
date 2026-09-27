@@ -11,9 +11,9 @@
   "worldgenWeight": 0.0,
   "worldgenFamilyId": "altar",
   "cultivationPalette": {
-    "pathBlocks": ["minecraft:cut_copper", "minecraft:copper_block", "minecraft:raw_copper_block"],
-    "cultivationBlocks": ["minecraft:copper_block"],
-    "structureBlocks": ["minecraft:raw_copper_block", "minecraft:copper_block", "minecraft:cut_copper"],
+    "pathBlocks": ["minecraft:oxidized_cut_copper", "minecraft:end_stone_bricks"],
+    "cultivationBlocks": ["minecraft:oxidized_copper"],
+    "structureBlocks": ["minecraft:end_stone_bricks", "minecraft:purpur_block", "minecraft:oxidized_cut_copper"],
     "trophyBlocks": ["minecraft:end_rod", "minecraft:white_candle", "minecraft:chorus_flower"],
     "decorations": ["minecraft:end_rod", "minecraft:potted_flowering_azalea_bush", "minecraft:white_candle", "minecraft:chorus_flower"]
   },

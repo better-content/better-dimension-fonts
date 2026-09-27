@@ -10,10 +10,11 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
+  "salienceAspects": ["mobility", "renewal"],
   "cultivationPalette": {
-    "pathBlocks": ["minecraft:cut_copper", "minecraft:copper_block", "minecraft:raw_copper_block"],
-    "cultivationBlocks": ["minecraft:copper_block"],
-    "structureBlocks": ["minecraft:raw_copper_block", "minecraft:copper_block", "minecraft:cut_copper"],
+    "pathBlocks": ["minecraft:oxidized_cut_copper", "aether:holystone_bricks"],
+    "cultivationBlocks": ["minecraft:oxidized_copper"],
+    "structureBlocks": ["aether:holystone_bricks", "aether:icestone", "aether:aerogel"],
     "trophyBlocks": ["aether:aerogel", "aether:icestone", "aether:ambrosium_torch"],
     "decorations": ["aether:ambrosium_torch", "aether:potted_purple_flower", "aether:potted_white_flower", "minecraft:lime_candle", "minecraft:white_candle"]
   },

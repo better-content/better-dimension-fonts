@@ -113,3 +113,63 @@ gradle.taskGraph.whenReady { graph ->
 }
 
 apply from: rootProject.file('gradle/gametest-evidence.gradle')
+
+// Non-shipping real-client screenshot harness. Its dimension dependencies stay out of
+// production and the regular GameTest runtime.
+sourceSets {
+    visualHarness {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations.visualHarnessImplementation.extendsFrom configurations.implementation
+configurations.visualHarnessRuntimeOnly.extendsFrom configurations.runtimeOnly
+def bumblezoneVisualDevelopment = configurations.create('bumblezoneVisualDevelopment')
+def remapVisualBumblezone = tasks.register('remapVisualBumblezone', Exec) {
+    dependsOn tasks.named('createSrgToMcp')
+    def output = layout.buildDirectory.file('visual/dependencies/bumblezone-mapped.jar')
+    inputs.files(bumblezoneVisualDevelopment)
+    inputs.file('scripts/remap-visual-bumblezone-mixins.py')
+    inputs.file(layout.buildDirectory.file('createSrgToMcp/output.srg'))
+    outputs.file(output)
+    doFirst {
+        commandLine 'python3', 'scripts/remap-visual-bumblezone-mixins.py',
+            bumblezoneVisualDevelopment.singleFile.absolutePath,
+            layout.buildDirectory.file('createSrgToMcp/output.srg').get().asFile.absolutePath,
+            output.get().asFile.absolutePath
+    }
+}
+
+dependencies {
+    visualHarnessRuntimeOnly fg.deobf('curse.maven:aether-255308:6134920')
+    visualHarnessRuntimeOnly fg.deobf('curse.maven:curios-api-309927:6418456')
+    add('bumblezoneVisualDevelopment', fg.deobf('curse.maven:the-bumblezone-362479:8548194'))
+    visualHarnessRuntimeOnly files(layout.buildDirectory.file('visual/dependencies/bumblezone-mapped.jar')).builtBy(remapVisualBumblezone)
+    visualHarnessRuntimeOnly fg.deobf('curse.maven:rats-323596:5904296')
+    visualHarnessRuntimeOnly fg.deobf('curse.maven:citadel-331936:7476570')
+}
+
+minecraft.runs {
+    visualServer {
+        parent minecraft.runs.server
+        workingDirectory project.file('build/visual/server')
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        args '--nogui'
+        mods { dimension_drink_visual_harness { source sourceSets.visualHarness } }
+    }
+    visualClient {
+        parent minecraft.runs.client
+        workingDirectory project.file('build/visual/client')
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        args '--quickPlayMultiplayer', '127.0.0.1:25566', '--width', '1600', '--height', '900'
+        mods { dimension_drink_visual_harness { source sourceSets.visualHarness } }
+    }
+}
+
+tasks.withType(JavaExec).configureEach {
+    if (name == 'runVisualServer') standardInput = System.in
+}
+tasks.matching { it.name in ['prepareRunVisualServerCompile', 'prepareRunVisualClientCompile'] }
+    .configureEach { dependsOn remapVisualBumblezone }

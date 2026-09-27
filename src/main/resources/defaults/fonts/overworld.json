@@ -10,10 +10,10 @@
   "worldgenWeight": 0.0,
   "worldgenFamilyId": "altar",
   "cultivationPalette": {
-    "pedestalBlock": "minecraft:raw_copper_block",
-    "pathBlocks": ["minecraft:cut_copper", "minecraft:copper_block", "minecraft:raw_copper_block"],
-    "cultivationBlocks": ["minecraft:copper_block"],
-    "structureBlocks": ["minecraft:raw_copper_block", "minecraft:copper_block", "minecraft:cut_copper"],
+    "pedestalBlock": "minecraft:oxidized_copper",
+    "pathBlocks": ["minecraft:oxidized_cut_copper", "minecraft:packed_mud"],
+    "cultivationBlocks": ["minecraft:oxidized_copper"],
+    "structureBlocks": ["minecraft:oxidized_copper", "minecraft:oxidized_cut_copper", "minecraft:packed_mud"],
     "decorations": ["minecraft:lantern", "minecraft:potted_flowering_azalea_bush", "minecraft:lime_candle", "minecraft:white_candle"]
   },
   "rewardTableId": "overworld",

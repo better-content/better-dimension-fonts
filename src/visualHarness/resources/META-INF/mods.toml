@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="dimension_drink_visual_harness"
+version="1"
+displayName="Dimension Drink Visual Harness"
+description='''Non-shipping real-client screenshot harness for dimensional Font sites.'''
+[[dependencies.dimension_drink_visual_harness]]
+modId="dimension_drink"
+mandatory=true
+versionRange="[1.0.0,)"
+ordering="AFTER"
+side="BOTH"

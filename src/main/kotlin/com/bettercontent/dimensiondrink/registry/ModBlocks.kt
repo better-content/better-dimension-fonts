@@ -2,6 +2,7 @@ package com.bettercontent.dimensiondrink.registry
 
 import com.bettercontent.dimensiondrink.MOD_ID
 import com.bettercontent.dimensiondrink.content.ObeliskBlock
+import com.bettercontent.dimensiondrink.content.FontPourerBlock
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.MapColor
@@ -35,5 +36,10 @@ object ModBlocks {
         )
     }
     val RETURN_PAD: RegistryObject<Block> = RETURN_FONT
+
+    val FONT_POURER: RegistryObject<Block> = REGISTRY.register("font_pourer") {
+        FontPourerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN)
+            .strength(4.0f).noOcclusion().lightLevel { 5 })
+    }
 
 }

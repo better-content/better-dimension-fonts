@@ -37,6 +37,10 @@ Use the permission-level-2 `/font find` command to list one indexed natural Font
 
 Naturally generated Fonts are added to a saved discovery index as their chunks load. Wandering-trader Font maps use only that index and never locate or generate remote structure chunks; maps are marker-only until players explore their terrain. Player-placed and debug Fonts are not indexed.
 
+New sites use a circular oxidized-copper court, decorative water and candles, and biome-matched stripped-log supports only where trees grow. Bumblezone sites include dense wax and hive clusters. Font maps display their destination's salience aspects; themed spirit sellers offer only matching surveyed destinations.
+
+The craftable Font Pourer sits two blocks above a Font, leaving one air block for a visible pour. It accepts the matching Nether, Aether, Bumblezone, or Ratlantis Libation by bucket or fluid automation and restores charge only while a run is active. One bucket supplies 48,000 charge, about ten extra minutes at the current 80 charge per second drain; a nominal 15,000-charge Font lasts roughly three minutes before entry costs. The Font itself has no fluid capability.
+
 These contracts are new-world-only. Existing copied configuration, historical structures, and saves are not migrated or scanned; remove old Font configuration and create a new world when validating the new distribution.
 
 `FontAggregateReturnEvent` posts once for every living participant actually transported back to

@@ -83,7 +83,7 @@ class ObeliskBlock(
 
         val obelisk = level.getBlockEntity(pos) as? ObeliskBlockEntity ?: return InteractionResult.PASS
 
-        if (held.item is AxeItem) {
+        if (held.item is AxeItem && !obelisk.isNaturallyGenerated) {
             val scraped = obelisk.scrapeAltarCopperOxidation(level)
             if (scraped > 0) {
                 held.hurtAndBreak(1, serverPlayer) { brokenPlayer -> brokenPlayer.broadcastBreakEvent(hand) }

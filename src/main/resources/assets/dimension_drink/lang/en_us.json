@@ -14,5 +14,16 @@
   "item.dimension_drink.affix.knockback_resistance": "+%s%% Knockback Resistance",
   "tooltip.dimension_drink.affixes": "Font Affixes",
   "item.dimension_drink.dimensional_font_map": "%s Map",
-  "item.dimension_drink.dimensional_font_map.destination": "Destination: %s"
+  "item.dimension_drink.dimensional_font_map.destination": "Destination: %s",
+  "item.dimension_drink.dimensional_font_map.aspects": "Salience: %s",
+  "block.dimension_drink.font_pourer": "Font Pourer",
+  "item.dimension_drink.font_pourer": "Font Pourer",
+  "fluid_type.dimension_drink.nether_libation": "Nether Font Libation",
+  "item.dimension_drink.nether_libation_bucket": "Bucket of Nether Font Libation",
+  "fluid_type.dimension_drink.aether_libation": "Aether Font Libation",
+  "item.dimension_drink.aether_libation_bucket": "Bucket of Aether Font Libation",
+  "fluid_type.dimension_drink.bumblezone_libation": "Bumblezone Font Libation",
+  "item.dimension_drink.bumblezone_libation_bucket": "Bucket of Bumblezone Font Libation",
+  "fluid_type.dimension_drink.ratlantis_libation": "Ratlantis Font Libation",
+  "item.dimension_drink.ratlantis_libation_bucket": "Bucket of Ratlantis Font Libation"
 }
