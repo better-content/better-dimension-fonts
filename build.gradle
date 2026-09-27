@@ -67,6 +67,7 @@ dependencies {
     // Forge dev runs load declared mandatory dependencies from runtimeOnly; testRuntimeOnly
     // alone is not part of the GameTestServer launch classpath.
     runtimeOnly fg.deobf('bettercontent.local:better-content-fixes:0.1.9')
+    runtimeOnly files(betterContentJar('better-content-notifications', 'better-content-notifications-1.0.0.jar'))
     // Better Content Fixes uses MixinExtras at runtime. The provider's reobfuscated
     // development JAR does not expose that nested dependency to ForgeGradle runs.
     runtimeOnly 'io.github.llamalad7:mixinextras-forge:0.5.4'

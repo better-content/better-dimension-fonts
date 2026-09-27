@@ -74,6 +74,9 @@ minecraft {
         gameTestServer {
             workingDirectory rootProject.gameTestRunDirectory
             property 'forge.enabledGameTestNamespaces', modId
+            // ModLauncher requests mixins before the exploded mod source is exposed to its
+            // context loader. Make the development config and accessor visible at bootstrap.
+            jvmArgs "-Xbootclasspath/a:${rootProject.layout.buildDirectory.get().asFile}/resources/main:${rootProject.layout.buildDirectory.get().asFile}/classes/java/main"
         }
 
         data {
