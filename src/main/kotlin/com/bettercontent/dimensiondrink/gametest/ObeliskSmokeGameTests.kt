@@ -33,12 +33,12 @@ class ObeliskSmokeGameTests {
     }
 
     @GameTest(templateNamespace = "dimension_drink", template = "bootstrap/empty", batch = "font_smoke", timeoutTicks = 1200)
-    fun external_dimension_change_cleans_session(helper: GameTestHelper) {
+    fun external_dimension_change_preserves_session(helper: GameTestHelper) {
         ObeliskGameTestSupport.smokeExternalDimensionCleanup(helper)
     }
 
     @GameTest(templateNamespace = "dimension_drink", template = "bootstrap/empty", batch = "font_smoke", timeoutTicks = 1200)
-    fun same_dimension_bounds_escape_cleans_session(helper: GameTestHelper) {
+    fun same_dimension_bounds_escape_preserves_session(helper: GameTestHelper) {
         ObeliskGameTestSupport.smokeSameDimensionBoundsEscapeCleanup(helper)
     }
 
@@ -53,7 +53,7 @@ class ObeliskSmokeGameTests {
     }
 
     @GameTest(templateNamespace = "dimension_drink", template = "bootstrap/empty", batch = "font_smoke", timeoutTicks = 1200)
-    fun final_player_logout_cleans_session(helper: GameTestHelper) {
+    fun final_player_logout_preserves_session(helper: GameTestHelper) {
         ObeliskGameTestSupport.smokeLogoutCleanup(helper)
     }
 

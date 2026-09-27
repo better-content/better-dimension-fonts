@@ -241,7 +241,7 @@ object RunRegistry : RunService {
         val player = event.entity as? ServerPlayer ?: return
         val record = mutableRunForPlayer(player.uuid) ?: return
         val handle = activeHandle(player.server, record)
-        if (handle == null || !backend.isPlayerInRun(player, handle)) {
+        if (handle == null) {
             clearPlayerAssignment(player.server, player.uuid)
             return
         }
@@ -263,10 +263,11 @@ object RunRegistry : RunService {
     @SubscribeEvent
     fun onPlayerLoggedOut(event: PlayerEvent.PlayerLoggedOutEvent) {
         val player = event.entity as? ServerPlayer ?: return
-        if (mutableRunForPlayer(player.uuid) == null) return
-        if (!returnPlayer(player)) {
-            clearPlayerAssignment(player.server, player.uuid)
-        }
+        val record = mutableRunForPlayer(player.uuid) ?: return
+        record.activePlayers -= player.uuid
+        record.pendingPlayers += player.uuid
+        backend.clearPlayer(player.uuid)
+        persistOrClose(player.server, record, "player-logout")
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -285,20 +286,8 @@ object RunRegistry : RunService {
 
     @SubscribeEvent
     fun onPlayerChangedDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
-        val player = event.entity as? ServerPlayer ?: return
-        if (player.uuid in returningPlayers) return
-        val record = mutableRunForPlayer(player.uuid) ?: return
-        if (event.to != record.backendLevelKey) {
-            // Aether's native fall-out and any other departure only reach this path for a
-            // player actually bound to this Font. Return through the recorded origin so the
-            // factual extraction event is emitted after a successful transport.
-            if (!returnPlayer(player)) {
-                detachPlayer(record, player.uuid, disqualify = true)
-                backend.clearPlayer(player.uuid)
-                forcedCleanups++
-                persistOrClose(player.server, record, "external-dimension-change")
-            }
-        }
+        // Dimension travel does not consume an active Font. The return Font and
+        // charge expiry still use the recorded origin for their return transport.
     }
 
     // Kept as a source-compatible no-op for older GameTests; death cleanup is immediate now.
@@ -308,8 +297,18 @@ object RunRegistry : RunService {
 
     @SubscribeEvent
     fun onServerStopping(event: ServerStoppingEvent) {
-        runs.keys.toList().forEach { closeRun(event.server, it, "server-stopping") }
-        RunSavedData.get(event.server).replaceAll(emptyList())
+        // A clean restart is a pause, not an extraction. Save every participant as
+        // pending and release runtime tickets without destroying the recorded site.
+        runs.values.forEach { record ->
+            record.pendingPlayers += record.activePlayers
+            record.activePlayers.forEach { backend.clearPlayer(it) }
+            record.activePlayers.clear()
+            record.state = RunState.WARMING_UP
+            record.updatedGameTime = currentGameTime(event.server)
+            RunBossBarManager.removeBossBar(record.id)
+            FontChunkTicketManager.release(event.server, record)
+        }
+        RunSavedData.get(event.server).replaceAll(runs.values)
     }
 
     @SubscribeEvent
@@ -549,11 +548,11 @@ object RunRegistry : RunService {
             if (player == null) {
                 record.activePlayers -= playerId
                 record.pendingPlayers += playerId
-            } else if (handle == null || !backend.isPlayerInRun(player, handle)) {
+            } else if (handle == null) {
                 if (!returnPlayer(player)) clearPlayerAssignment(server, playerId)
-            } else {
-                // A player reaches this branch only after the active Font backend confirms the
-                // current site bounds. This is an admitted immediate-risk window, so it may stop
+            } else if (backend.isPlayerInRun(player, handle)) {
+                // A player reaches this branch only while still in the active Font dimension.
+                // This is an admitted immediate-risk window, so it may stop
                 // Sleeping Overhaul's accelerated sleep without changing ordinary simulation.
                 FontSleepDangerAdmission.interrupt(player, record.state == RunState.ACTIVE, stillInWindow = true)
             }

@@ -27,22 +27,7 @@ object PlayerReturnHandler {
             return
         }
 
-        val levelKey = record.backendLevelKey
-        val bounds = record.backendSiteBounds
-        if (levelKey == null || bounds == null) {
-            if (!RunRegistry.returnPlayer(player)) RunRegistry.clearPlayerAssignment(player.server, player.uuid)
-            return
-        }
-
-        if (player.serverLevel().dimension() != levelKey) {
-            // Aether fall-out and other exits are extraction paths. Let the registry
-            // confirm transport before consuming the participant binding.
-            if (!RunRegistry.returnPlayer(player)) RunRegistry.clearPlayerAssignment(player.server, player.uuid)
-            return
-        }
-
-        if (!bounds.contains(player.blockPosition())) {
-            if (!RunRegistry.returnPlayer(player)) RunRegistry.clearPlayerAssignment(player.server, player.uuid)
-        }
+        // Location is not an exit condition. A traveler may explore beyond the site
+        // bounds without losing the Font binding or being returned to the origin.
     }
 }

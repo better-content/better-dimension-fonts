@@ -432,10 +432,11 @@ object ObeliskGameTestSupport {
 
             player.teleportTo(helper.level, originPos.x + 8.5, originPos.y + 1.0, originPos.z + 0.5, 0.0f, 0.0f)
             client.pump(server)
-            helper.assertTrue(RunRegistry.getRun(player.uuid) == null, "Expected external dimension change to clear ownership")
-            helper.assertTrue(RunRegistry.get(runId) == null, "Expected escaped final player to close session")
-            helper.assertTrue(obelisk.activeRunId == null, "Expected escaped session to clear origin font")
-            helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Expected escape cleanup to release its origin chunk ticket")
+            helper.assertTrue(RunRegistry.getRun(player.uuid)?.runId == runId, "Expected external dimension change to retain ownership")
+            helper.assertTrue(RunRegistry.get(runId) != null, "Expected external dimension change to retain the session")
+            helper.assertTrue(obelisk.activeRunId == runId, "Expected external dimension change to retain the origin font")
+            helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected active session to retain its origin chunk ticket")
+            helper.assertTrue(RunRegistry.returnPlayer(player), "Expected return Font transport to end the run")
             runId = null
             client.close(server)
             helper.succeed()
@@ -462,11 +463,16 @@ object ObeliskGameTestSupport {
             helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected logout run to own its origin chunk ticket")
 
             RunRegistry.onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent(player))
-            helper.assertTrue(RunRegistry.getRun(player.uuid) == null, "Expected logout to clear player ownership")
-            helper.assertTrue(RunRegistry.get(runId) == null, "Expected final-player logout to close the session")
-            helper.assertTrue(obelisk.activeRunId == null, "Expected logout cleanup to clear the origin font")
-            helper.assertTrue(RunSavedData.get(server).snapshot().none { it.id == runId }, "Expected logout cleanup to remove saved run data")
-            helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Expected logout cleanup to release its origin chunk ticket")
+            val pending = requireNotNull(RunRegistry.get(runId))
+            helper.assertTrue(RunRegistry.getRun(player.uuid)?.runId == runId, "Expected logout to preserve player ownership")
+            helper.assertTrue(player.uuid in pending.pendingPlayers, "Expected logged out player to remain pending")
+            helper.assertTrue(obelisk.activeRunId == runId, "Expected logout to retain the origin font")
+            helper.assertTrue(RunSavedData.get(server).snapshot().any { it.id == runId }, "Expected logout to retain saved run data")
+            helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Expected dormant run to release its origin chunk ticket")
+            RunRegistry.onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent(player))
+            helper.assertTrue(RunRegistry.get(runId)?.activePlayers?.contains(player.uuid) == true, "Expected login to resume the run")
+            helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected resumed run to reacquire its origin chunk ticket")
+            helper.assertTrue(RunRegistry.returnPlayer(player), "Expected return Font transport to end the run")
             runId = null
             client.close(server)
             helper.succeed()
@@ -563,13 +569,14 @@ object ObeliskGameTestSupport {
             val destination = requireNotNull(record.backendLevelKey?.let(server::getLevel))
             player.teleportTo(destination, bounds.maxX + 16.5, record.spawnPos!!.y.toDouble(), bounds.maxZ + 16.5, 0.0f, 0.0f)
 
-            waitUntil(helper, 80, "Expected same-dimension bounds escape to close the run", condition = {
+            waitUntil(helper, 80, "Expected same-dimension travel to retain the run", condition = {
                 client.pump(server)
-                RunRegistry.get(runId!!) == null
+                RunRegistry.get(runId!!) != null && RunRegistry.getRun(player.uuid)?.runId == runId
             }, onSuccess = {
-                helper.assertTrue(player.serverLevel().dimension() == helper.level.dimension(), "Expected escaped player to return to the origin")
-                helper.assertTrue(obelisk.activeRunId == null, "Expected bounds escape to clear the origin font")
-                helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Expected bounds escape to release the origin chunk ticket")
+                helper.assertTrue(player.serverLevel().dimension() == destination.dimension(), "Expected player to remain in the Font dimension")
+                helper.assertTrue(obelisk.activeRunId == runId, "Expected travel beyond bounds to retain the origin font")
+                helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected travel beyond bounds to retain the origin chunk ticket")
+                helper.assertTrue(RunRegistry.returnPlayer(player), "Expected return Font transport to end the run")
                 runId = null
                 client.close(server)
                 helper.succeed()
@@ -596,6 +603,8 @@ object ObeliskGameTestSupport {
             runId = requireNotNull(RunRegistry.getRun(player.uuid)).runId
             helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected live run ticket before restart simulation")
 
+            RunRegistry.onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent(server))
+            helper.assertTrue(RunSavedData.get(server).snapshot().any { it.id == runId }, "Clean restart must preserve the Font run")
             RunRegistry.restoreFromSavedData(server)
             val dormant = requireNotNull(RunRegistry.get(runId!!)) { "Expected interrupted run to restore" }
             helper.assertTrue(dormant.state == RunState.WARMING_UP, "Expected interrupted run to restore dormant")
@@ -615,9 +624,10 @@ object ObeliskGameTestSupport {
             val bounds = requireNotNull(RunRegistry.get(runId!!)?.backendSiteBounds)
             player.teleportTo(destination, bounds.maxX + 16.5, player.y, bounds.maxZ + 16.5, 0.0f, 0.0f)
             RunRegistry.onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent(player))
-            helper.assertTrue(RunRegistry.get(runId!!) == null, "Expected invalid reconnect to close the final-player run")
-            helper.assertTrue(RunRegistry.getRun(player.uuid) == null, "Expected invalid reconnect to clear ownership")
-            helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Expected invalid reconnect to remain ticketless")
+            helper.assertTrue(RunRegistry.get(runId!!) != null, "Expected distant reconnect to retain the run")
+            helper.assertTrue(RunRegistry.getRun(player.uuid)?.runId == runId, "Expected distant reconnect to retain ownership")
+            helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Expected distant reconnect to reacquire the ticket")
+            helper.assertTrue(RunRegistry.returnPlayer(player), "Expected return Font transport after distant reconnect")
             runId = null
             client.close(server)
             helper.succeed()

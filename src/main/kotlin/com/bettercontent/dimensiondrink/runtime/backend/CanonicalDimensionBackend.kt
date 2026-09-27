@@ -6,6 +6,7 @@ import com.bettercontent.dimensiondrink.data.ObeliskDataManager
 import com.bettercontent.dimensiondrink.data.ObeliskDefinition
 import com.bettercontent.dimensiondrink.registry.ModBlocks
 import com.bettercontent.dimensiondrink.runtime.player.FontTravelAuthorization
+import com.bettercontent.dimensiondrink.runtime.run.RunRegistry
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceKey
@@ -133,6 +134,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
 
     override fun returnPlayer(player: ServerPlayer): ReturnRunResult {
         val siteId = playerBindings[player.uuid]
+            ?: RunRegistry.getRun(player.uuid)?.let { RunRegistry.get(it.runId)?.instanceId }
             ?: siteForPlayer(player)?.siteId
             ?: return ReturnRunResult.NotBound
         val record = site(player.server, siteId) ?: return ReturnRunResult.Rejected("site record is missing")
@@ -183,7 +185,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
     }
 
     override fun isPlayerInRun(player: ServerPlayer, handle: ActiveSiteHandle): Boolean {
-        return player.serverLevel().dimension() == handle.backendLevelKey && handle.siteBounds.contains(player.blockPosition())
+        return player.serverLevel().dimension() == handle.backendLevelKey
     }
 
     override fun describeProgress(server: MinecraftServer, handle: PreparedSiteHandle): String {
