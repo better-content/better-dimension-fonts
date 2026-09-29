@@ -1806,7 +1806,7 @@ object ObeliskGameTestSupport {
         obelisk.setChargeStoredForDebug(0)
 
         helper.runAfterDelay(12) {
-            helper.assertTrue(obelisk.chargeStored >= 3.0, "Expected a loaded font to regenerate through its block ticker")
+            helper.assertTrue(obelisk.chargeStored >= 15.0, "Expected a loaded font to regenerate at 1.25 charge per tick")
             val persisted = obelisk.updateTag.copy()
             val savedCharge = obelisk.chargeStored
             val savedGameTime = persisted.getLong("last_passive_regen_game_time")
@@ -1815,8 +1815,8 @@ object ObeliskGameTestSupport {
             obelisk.load(persisted)
             obelisk.advancePassiveRegeneration(savedGameTime + 400L)
             helper.assertTrue(
-                obelisk.chargeStored == savedCharge + 100.0,
-                "Expected 400 unloaded server ticks at 0.25 mB/t to restore exactly 100 mB"
+                obelisk.chargeStored == savedCharge + 500.0,
+                "Expected 400 unloaded server ticks at 1.25 charge/t to restore exactly 500 charge"
             )
 
             obelisk.setChargeStoredForDebug(obelisk.getModifiedMaxStorage() - 10)
@@ -1861,7 +1861,7 @@ object ObeliskGameTestSupport {
         obelisk.advancePassiveRegeneration(now + 1_000L)
         helper.assertTrue(obelisk.chargeStored == 0.0, "Expected clean NBT to seed its clock without a regeneration windfall")
         obelisk.advancePassiveRegeneration(now + 1_004L)
-        helper.assertTrue(obelisk.chargeStored == 1.0, "Expected charging to begin after the legacy clock is seeded")
+        helper.assertTrue(obelisk.chargeStored == 5.0, "Expected charging at 1.25 charge/t after the legacy clock is seeded")
 
         obelisk.setChargeStoredForDebug(0)
         obelisk.setActiveRun(UUID.randomUUID())
@@ -1878,7 +1878,7 @@ object ObeliskGameTestSupport {
         obelisk.advancePassiveRegeneration(now)
         helper.assertTrue(obelisk.chargeStored == 0.0, "Expected a future timestamp to reset without granting charge")
         obelisk.advancePassiveRegeneration(now + 4L)
-        helper.assertTrue(obelisk.chargeStored == 1.0, "Expected charging to resume from the reset baseline")
+        helper.assertTrue(obelisk.chargeStored == 5.0, "Expected charging to resume at 1.25 charge/t from the reset baseline")
 
         val returnPos = helper.absolutePos(BlockPos(24, 2, 20))
         helper.level.setBlock(returnPos, ModBlocks.RETURN_FONT.get().defaultBlockState(), 3)

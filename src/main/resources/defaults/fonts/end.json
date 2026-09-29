@@ -21,7 +21,7 @@
   "maxCharge": 15000,
   "startChargeCost": 600.0,
   "joinChargeCost": 0.0,
-  "passiveChargePerTick": 0.25,
+  "passiveChargePerTick": 1.25,
   "runBaseChargePerSecond": 80.0,
   "runPlayerChargePerSecond": 40.0
 }

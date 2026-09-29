@@ -3,6 +3,7 @@ package com.bettercontent.dimensiondrink.data
 import com.google.gson.GsonBuilder
 import com.mojang.logging.LogUtils
 import com.bettercontent.dimensiondrink.MOD_ID
+import com.bettercontent.dimensiondrink.ObeliskConstants
 import com.bettercontent.dimensiondrink.worldgen.FontSelector
 import net.minecraftforge.fml.ModList
 import net.minecraftforge.fml.loading.FMLPaths
@@ -37,6 +38,7 @@ object ObeliskDataManager {
     @Synchronized
     fun reload() {
         copyDefaultsIfMissing()
+        FontDefinitionMigrations.migrateLegacyPassiveChargeDefaults(configRoot)
         obeliskDefinitions = loadDirectory(definitionsDir, ObeliskDefinition::class.java)
             .mapNotNull(::normalizeObeliskDefinition)
             .associateBy { it.id }
@@ -126,7 +128,8 @@ object ObeliskDataManager {
             maxCharge = definition.maxCharge?.coerceIn(1.0, 1_000_000.0) ?: 15_000.0,
             startChargeCost = definition.startChargeCost?.coerceAtLeast(0.0) ?: 600.0,
             joinChargeCost = definition.joinChargeCost?.coerceAtLeast(0.0) ?: 0.0,
-            passiveChargePerTick = definition.passiveChargePerTick?.coerceAtLeast(0.0) ?: 0.25,
+            passiveChargePerTick = definition.passiveChargePerTick?.coerceAtLeast(0.0)
+                ?: ObeliskConstants.PASSIVE_CHARGE_PER_TICK,
             runBaseChargePerSecond = definition.runBaseChargePerSecond?.coerceAtLeast(0.0) ?: 80.0,
             runPlayerChargePerSecond = definition.runPlayerChargePerSecond?.coerceAtLeast(0.0) ?: 40.0,
             requiredNamespace = requiredNamespace,
