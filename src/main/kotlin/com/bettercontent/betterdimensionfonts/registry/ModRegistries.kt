@@ -1,0 +1,16 @@
+package com.bettercontent.betterdimensionfonts.registry
+
+import net.minecraftforge.eventbus.api.IEventBus
+
+object ModRegistries {
+    fun registerAll(bus: IEventBus) {
+        ModLibationFluids.bootstrap()
+        ModLibationFluids.register(bus)
+        ModStructurePoolElements.register(bus)
+        ModStructures.register(bus)
+        ModBlocks.REGISTRY.register(bus)
+        ModItems.REGISTRY.register(bus)
+        ModBlockEntities.REGISTRY.register(bus)
+        ModFeatures.REGISTRY.register(bus)
+    }
+}

@@ -18,7 +18,7 @@ KFF_JAR_PATH="${KFF_JAR_PATH:-${HOME}/.gradle/caches/modules-2/files-2.1/curse.m
 FORGE_INSTALLER_PATH="${FORGE_INSTALLER_PATH:-${ROOT_DIR}/.cache/forge/forge-${FORGE_COORD_VERSION}-installer.jar}"
 
 ENGINE_JAR="$(find "${ROOT_DIR}/instanced-dimensions/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' | head -n 1)"
-DIMENSION_DRINK_JAR="$(find "${ROOT_DIR}/dimension_drink/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' | head -n 1)"
+DIMENSION_DRINK_JAR="$(find "${ROOT_DIR}/better_dimension_fonts/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' | head -n 1)"
 
 require_file() {
   local path="$1"
@@ -96,7 +96,7 @@ main() {
   require_file "${C2MEF_JAR_PATH}" "C2MEF jar"
   require_file "${KFF_JAR_PATH}" "Kotlin for Forge jar"
   require_file "${ENGINE_JAR}" "Instanced Dimensions jar"
-  require_file "${DIMENSION_DRINK_JAR}" "Dimension Drink jar"
+  require_file "${DIMENSION_DRINK_JAR}" "Better Dimension Fonts jar"
 
   download_installer
   require_file "${FORGE_INSTALLER_PATH}" "Forge installer"

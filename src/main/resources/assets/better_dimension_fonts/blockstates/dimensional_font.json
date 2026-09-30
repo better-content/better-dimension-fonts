@@ -1,0 +1,6 @@
+{
+  "multipart": [
+    { "when": { "bound": "true" }, "apply": { "model": "better_dimension_fonts:block/dimensional_font" } },
+    { "when": { "bound": "false" }, "apply": { "model": "better_dimension_fonts:block/unbound_font" } }
+  ]
+}

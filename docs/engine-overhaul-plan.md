@@ -1,4 +1,4 @@
-# Dimension Drink Runtime Plan
+# Better Dimension Fonts Runtime Plan
 
 Dimensional font runs are canonical-dimension expeditions started by drinking from a charge font. A run is anchored at a real coordinate in the configured target dimension. The backend does not create per-run dimensions and does not permanently scar terrain.
 

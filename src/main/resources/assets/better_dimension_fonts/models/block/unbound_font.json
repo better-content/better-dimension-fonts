@@ -1,0 +1,7 @@
+{
+  "parent": "better_dimension_fonts:block/dimensional_font",
+  "textures": {
+    "stone": "minecraft:block/oxidized_cut_copper",
+    "particle": "minecraft:block/oxidized_cut_copper"
+  }
+}

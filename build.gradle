@@ -5,8 +5,8 @@ plugins {
 }
 
 ext {
-    modId = 'dimension_drink'
-    modName = 'Dimension Drink'
+    modId = 'better_dimension_fonts'
+    modName = 'Better Dimension Fonts'
     modGroupId = 'com.bettercontent'
     modDescription = 'Neutral-charge dimensional fonts open real-dimension expeditions from small altars.'
 }
@@ -36,7 +36,7 @@ repositories {
     maven { url = 'https://maven.llamalad7.mixinextras.org/releases/' }
     ivy {
         name = 'betterContentFixesLocal'
-        url = uri(betterContentJar('better-content-fixes', 'better-content-fixes-0.1.9.jar').parentFile)
+        url = uri(betterContentJar('better-compat-fixes', 'better-compat-fixes-0.1.9.jar').parentFile)
         patternLayout { artifact('[artifact]-[revision].[ext]') }
         metadataSources { artifact() }
         content { includeGroup('bettercontent.local') }
@@ -48,7 +48,7 @@ def explicitGameTestSelection = findProperty('dimensionDrinkGameTestSelection')?
 ext.dimensionDrinkGameTestSelection = explicitGameTestSelection ?: 'all'
 def supportedSelections = ['all', 'smoke', 'run', 'activation', 'rewards', 'void', 'data', 'template', 'multiplayer', 'commands', 'runtime']
 if (!supportedSelections.contains(dimensionDrinkGameTestSelection)) {
-    throw new GradleException("Unknown Dimension Drink GameTest selection: ${dimensionDrinkGameTestSelection}")
+    throw new GradleException("Unknown Better Dimension Fonts GameTest selection: ${dimensionDrinkGameTestSelection}")
 }
 
 gradle.projectsEvaluated {
@@ -63,16 +63,16 @@ dependencies {
 
     compileOnly fg.deobf(mantleDep)
     compileOnly fg.deobf(tconstructDep)
-    compileOnly fg.deobf('bettercontent.local:better-content-fixes:0.1.9')
+    compileOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
     // Forge dev runs load declared mandatory dependencies from runtimeOnly; testRuntimeOnly
     // alone is not part of the GameTestServer launch classpath.
-    runtimeOnly fg.deobf('bettercontent.local:better-content-fixes:0.1.9')
-    runtimeOnly files(betterContentJar('better-content-notifications', 'better-content-notifications-1.0.0.jar'))
+    runtimeOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
+    runtimeOnly files(betterContentJar('better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar'))
     // Better Content Fixes uses MixinExtras at runtime. The provider's reobfuscated
     // development JAR does not expose that nested dependency to ForgeGradle runs.
     runtimeOnly 'io.github.llamalad7:mixinextras-forge:0.5.4'
-    testCompileOnly fg.deobf('bettercontent.local:better-content-fixes:0.1.9')
-    testRuntimeOnly fg.deobf('bettercontent.local:better-content-fixes:0.1.9')
+    testCompileOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
+    testRuntimeOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
     if ((findProperty('dimensionDrinkIncludeCompatRuntime') ?: 'false').toString().toBoolean()) {
         runtimeOnly fg.deobf(mantleDep)
         runtimeOnly fg.deobf(tconstructDep)
@@ -109,7 +109,7 @@ gradle.taskGraph.whenReady { graph ->
     }
     if (required != null) project.ext.dimensionDrinkGameTestSelection = required
     if ((full || smoke) && dimensionDrinkGameTestNamespaces != modId) {
-        throw new GradleException('Verification requires the dimension_drink GameTest namespace')
+        throw new GradleException('Verification requires the better_dimension_fonts GameTest namespace')
     }
 }
 
@@ -157,7 +157,7 @@ minecraft.runs {
         property 'mixin.env.remapRefMap', 'true'
         property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         args '--nogui'
-        mods { dimension_drink_visual_harness { source sourceSets.visualHarness } }
+        mods { better_dimension_fonts_visual_harness { source sourceSets.visualHarness } }
     }
     visualClient {
         parent minecraft.runs.client
@@ -165,7 +165,7 @@ minecraft.runs {
         property 'mixin.env.remapRefMap', 'true'
         property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         args '--quickPlayMultiplayer', '127.0.0.1:25566', '--width', '1600', '--height', '900'
-        mods { dimension_drink_visual_harness { source sourceSets.visualHarness } }
+        mods { better_dimension_fonts_visual_harness { source sourceSets.visualHarness } }
     }
 }
 

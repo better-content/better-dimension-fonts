@@ -1,0 +1,5 @@
+{
+  "multipart": [
+    { "apply": { "model": "better_dimension_fonts:block/return_font" } }
+  ]
+}

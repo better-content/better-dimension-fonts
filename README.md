@@ -1,4 +1,4 @@
-# Dimension Drink
+# Better Dimension Fonts
 
 Pack-owned obelisk and charge-font worldgen/runtime mod for Forge `1.20.1`.
 
@@ -29,7 +29,7 @@ prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 
 ## Font generation and discovery
 
-Dimension Drink bundles the Aether, Bumblezone, Nether, and Ratlantis Font definitions at equal default `worldgenWeight`. A weight controls deterministic selection at an eligible structure start; it does not guarantee equal visible counts in a finite explored area. Terrain rejection, exploration history, destroyed Fonts, and map sales are measured separately from configured probability.
+Better Dimension Fonts bundles the Aether, Bumblezone, Nether, and Ratlantis Font definitions at equal default `worldgenWeight`. A weight controls deterministic selection at an eligible structure start; it does not guarantee equal visible counts in a finite explored area. Terrain rejection, exploration history, destroyed Fonts, and map sales are measured separately from configured probability.
 
 Layout and definition selection use independent deterministic seed domains, so terrain opportunity cannot systematically favor a Font type. Custom JSON definitions remain supported when their weights are positive and finite. The effective normalized weights are logged on reload and available with the permission-level-2 `/font audit` command.
 
@@ -57,7 +57,7 @@ to emit `font_route_completed=returned`.
 
 Use the staged reobfuscated runtime jar for pack deployment:
 
-- `build/libs/dimension-drink-<version>.jar`
+- `build/libs/better-dimension-fonts-<version>.jar`
 
 `stageRuntimeJar` copies `build/reobfJar/output.jar` onto that canonical release path so pack deployment does not need a repo-specific rename rule.
 
@@ -67,9 +67,9 @@ For modpack and mod discussion, playtest feedback, and bug reports, join the [Be
 
 ## Canonical identity
 
-- Repository and Gradle project: `dimension-drink`
-- Mod ID and resource namespace: `dimension_drink`
+- Repository and Gradle project: `better-dimension-fonts`
+- Mod ID and resource namespace: `better_dimension_fonts`
 - Maven group: `com.bettercontent`
-- Runtime artifact: `build/libs/dimension-drink-<version>.jar`
+- Runtime artifact: `build/libs/better-dimension-fonts-<version>.jar`
 
 The canonical identity is a clean break. Legacy mod IDs, resource namespaces, configuration paths, commands, network channels, and saved-data keys are not migrated or aliased.

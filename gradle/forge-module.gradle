@@ -37,8 +37,8 @@ dependencies {
 }
 
 mixin {
-    add sourceSets.main, 'dimension_drink.refmap.json'
-    config 'dimension_drink.mixins.json'
+    add sourceSets.main, 'better_dimension_fonts.refmap.json'
+    config 'better_dimension_fonts.mixins.json'
 }
 
 minecraft {

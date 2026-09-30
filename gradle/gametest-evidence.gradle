@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 
 // The expected profile is reviewed alongside tests; the reporter records runtime IDs.
 def executionReport = new File(gameTestRunDirectory, 'execution.json')
-minecraft.runs.gameTestServer.property('bc.gametest.dimension_drink.report', executionReport.absolutePath)
+minecraft.runs.gameTestServer.property('bc.gametest.better_dimension_fonts.report', executionReport.absolutePath)
 
 def validateExecution = { File reportFile, List<String> expected, String profile, String runId ->
     if (!expected || expected.toSet().size() != expected.size()) {
@@ -24,10 +24,10 @@ def validateExecution = { File reportFile, List<String> expected, String profile
 
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
     doFirst {
-        systemProperty 'dimension_drink.gametest.selection', dimensionDrinkGameTestSelection
-        systemProperty 'bc.gametest.dimension_drink.runId', gameTestRunId
+        systemProperty 'better_dimension_fonts.gametest.selection', dimensionDrinkGameTestSelection
+        systemProperty 'bc.gametest.better_dimension_fonts.runId', gameTestRunId
         java.nio.file.Files.deleteIfExists(executionReport.toPath())
-        logger.lifecycle("Dimension Drink GameTest profile ${dimensionDrinkGameTestSelection}; fixture ${gameTestRunDirectory}")
+        logger.lifecycle("Better Dimension Fonts GameTest profile ${dimensionDrinkGameTestSelection}; fixture ${gameTestRunDirectory}")
     }
     doLast {
         def expectedProfile = file("gametest/profiles/${dimensionDrinkGameTestSelection}.txt")

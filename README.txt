@@ -1,4 +1,4 @@
-Dimension Drink
+Better Dimension Fonts
 =================
 
 Forge 1.20.1 Kotlin mod for dimensional charge-font expeditions.

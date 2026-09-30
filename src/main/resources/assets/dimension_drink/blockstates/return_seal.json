@@ -1,5 +1,0 @@
-{
-  "multipart": [
-    { "apply": { "model": "dimension_drink:block/return_font" } }
-  ]
-}

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.bettercontent.betterdimensionfonts.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "better_dimension_fonts.refmap.json",
+  "mixins": [
+    "StructureTemplatePoolAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
