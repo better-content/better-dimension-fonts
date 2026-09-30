@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils
 import com.bettercontent.betterdimensionfonts.api.RunBeginResult
 import com.bettercontent.betterdimensionfonts.data.ObeliskDataManager
 import com.bettercontent.betterdimensionfonts.content.ObeliskBlockEntity
+import com.bettercontent.betterdimensionfonts.content.ObeliskBlock
 import com.bettercontent.betterdimensionfonts.registry.ModBlocks
 import com.bettercontent.betterdimensionfonts.runtime.ObeliskRuntimeService
 import com.bettercontent.betterdimensionfonts.runtime.backend.RunBackendManager
@@ -28,6 +29,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.Fluids
@@ -447,6 +449,10 @@ object ObeliskCommands {
             return 0
         }
 
+        val placedState = level.getBlockState(pos)
+        if (!placedState.getValue(ObeliskBlock.BOUND)) {
+            level.setBlock(pos, placedState.setValue(ObeliskBlock.BOUND, true), Block.UPDATE_CLIENTS)
+        }
         obelisk.setTargetTemplate(template)
         obelisk.fillToCapacity()
         obelisk.setActiveRun(null)
