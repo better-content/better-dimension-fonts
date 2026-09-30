@@ -6,6 +6,8 @@
   "item.dimension_drink.canvas_collar": "Canvas Dimensional Collar",
   "item.dimension_drink.iron_collar": "Iron Dimensional Collar",
   "item.dimension_drink.diamond_collar": "Diamond Dimensional Collar",
+  "tooltip.dimension_drink.collar.mark": "Use on a mob to set this tier's one active mark. Replacing it gives no refund.",
+  "tooltip.dimension_drink.collar.travel": "Within 8 blocks, follows into a Font; returns from anywhere in the expedition.",
   "item.dimension_drink.affix.durability": "+%s%% Durability",
   "item.dimension_drink.affix.attack_damage": "+%s%% Attack Damage",
   "item.dimension_drink.affix.attack_speed": "+%s%% Attack Speed",
