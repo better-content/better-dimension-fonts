@@ -5,6 +5,8 @@ import com.bettercontent.dimensiondrink.runtime.run.RunRegistry
 import com.bettercontent.dimensiondrink.registry.ModBlockEntities
 import com.bettercontent.dimensiondrink.trade.FontLocationSavedData
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.tags.FluidTags
 import net.minecraft.core.particles.DustParticleOptions
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.sounds.SoundEvents
@@ -17,13 +19,23 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.AxeItem
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.BlockGetter
+import net.minecraft.world.level.LevelAccessor
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.RenderShape
+import net.minecraft.world.level.block.SimpleWaterloggedBlock
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.StateDefinition
+import net.minecraft.world.level.block.state.properties.BlockStateProperties
+import net.minecraft.world.level.block.state.properties.BooleanProperty
+import net.minecraft.world.level.material.FluidState
+import net.minecraft.world.level.material.Fluids
+import net.minecraft.world.item.context.BlockPlaceContext
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.pathfinder.PathComputationType
 import net.minecraft.world.phys.BlockHitResult
 import org.joml.Vector3f
@@ -31,7 +43,44 @@ import org.joml.Vector3f
 class ObeliskBlock(
     properties: Properties,
     private val returnOnly: Boolean = false
-) : Block(properties), EntityBlock {
+) : Block(properties), EntityBlock, SimpleWaterloggedBlock {
+    companion object {
+        val BOUND: BooleanProperty = BooleanProperty.create("bound")
+        val WATERLOGGED: BooleanProperty = BlockStateProperties.WATERLOGGED
+    }
+
+    init {
+        registerDefaultState(stateDefinition.any().setValue(BOUND, false).setValue(WATERLOGGED, false))
+    }
+
+    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
+        builder.add(BOUND, WATERLOGGED)
+    }
+
+    override fun getStateForPlacement(context: BlockPlaceContext): BlockState =
+        defaultBlockState().setValue(WATERLOGGED, context.level.getFluidState(context.clickedPos).`is`(FluidTags.WATER))
+
+    override fun getFluidState(state: BlockState): FluidState =
+        if (state.getValue(WATERLOGGED)) Fluids.WATER.getSource(false) else super.getFluidState(state)
+
+    override fun updateShape(state: BlockState, direction: Direction, neighborState: BlockState,
+                             level: LevelAccessor, pos: BlockPos, neighborPos: BlockPos): BlockState {
+        if (state.getValue(WATERLOGGED)) level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level))
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos)
+    }
+
+    override fun playerDestroy(level: Level, player: Player, pos: BlockPos, state: BlockState,
+                               blockEntity: BlockEntity?, tool: ItemStack) {
+        if (!returnOnly && state.getValue(BOUND) && level is ServerLevel) {
+            level.sendParticles(ParticleTypes.PORTAL, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
+                36, 0.45, 0.35, 0.45, 0.12)
+            level.sendParticles(DustParticleOptions(Vector3f(0.34f, 0.76f, 0.58f), 1.0f),
+                pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, 28, 0.4, 0.3, 0.4, 0.02)
+            level.playSound(null, pos, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 1.1f, 0.7f)
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 0.8f, 0.85f)
+        }
+        super.playerDestroy(level, player, pos, state, blockEntity, tool)
+    }
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity = ObeliskBlockEntity(pos, state)
 

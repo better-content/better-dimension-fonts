@@ -6,13 +6,16 @@ import com.bettercontent.dimensiondrink.trade.DimensionalFontMapListing
 import com.bettercontent.dimensiondrink.trade.DimensionalFontMapTrades
 import com.bettercontent.dimensiondrink.trade.FontLocationSavedData
 import com.bettercontent.dimensiondrink.content.ObeliskBlockEntity
+import com.bettercontent.dimensiondrink.content.ObeliskBlock
 import com.bettercontent.dimensiondrink.registry.ModBlocks
+import com.bettercontent.dimensiondrink.runtime.backend.CanonicalDimensionBackend
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.gametest.framework.GameTest
 import net.minecraft.gametest.framework.GameTestHelper
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.levelgen.Heightmap
 import net.minecraftforge.gametest.PrefixGameTestTemplate
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -20,6 +23,50 @@ import java.nio.file.Path
 
 @PrefixGameTestTemplate(false)
 class ObeliskDataGameTests {
+    @GameTest(templateNamespace = "dimension_drink", template = "bootstrap/empty", batch = "obelisk_data", timeoutTicks = 200)
+    fun submerged_return_font_preserves_water_and_builds_four_bubble_columns(helper: GameTestHelper) {
+        val origin = helper.absolutePos(BlockPos(8, 3, 8))
+        val floor = BlockPos(origin.x,
+            helper.level.getHeight(Heightmap.Types.WORLD_SURFACE, origin.x, origin.z) + 20, origin.z)
+        for (dx in -3..3) for (dz in -3..3) {
+            val column = floor.offset(dx, 0, dz)
+            helper.level.setBlockAndUpdate(column, Blocks.STONE.defaultBlockState())
+            for (dy in 1..7) {
+                helper.level.setBlockAndUpdate(column.above(dy),
+                    if (kotlin.math.abs(dx) == 3 || kotlin.math.abs(dz) == 3)
+                        Blocks.STONE.defaultBlockState() else Blocks.WATER.defaultBlockState())
+            }
+        }
+        val detectedFloor = CanonicalDimensionBackend.findSafeFloor(helper.level, floor.x, floor.z)
+        helper.assertTrue(detectedFloor == floor,
+            "Expected submerged seabed $floor as arrival floor, found $detectedFloor; " +
+                "feet=${helper.level.getBlockState(floor.above())}, head=${helper.level.getBlockState(floor.above(2))}, " +
+                "corner=${helper.level.getBlockState(floor.offset(2, 1, 2))}, " +
+                "aboveWater=${helper.level.getBlockState(floor.above(8))}")
+        CanonicalDimensionBackend.ensureArrivalAnchor(helper.level, floor)
+        val font = helper.level.getBlockState(floor.above())
+        helper.assertTrue(font.`is`(ModBlocks.RETURN_FONT.get()) && font.getValue(ObeliskBlock.WATERLOGGED),
+            "Expected a waterlogged return Font")
+        for (dx in -2..2) for (dz in -2..2) {
+            val floorPos = floor.offset(dx, 0, dz)
+            val corner = kotlin.math.abs(dx) == 2 && kotlin.math.abs(dz) == 2
+            helper.assertTrue(helper.level.getBlockState(floorPos).`is`(
+                if (corner) Blocks.SOUL_SAND else Blocks.OXIDIZED_COPPER), "Incorrect arrival floor at $floorPos")
+            for (dy in 2..7) {
+                helper.assertTrue(!helper.level.getBlockState(floorPos.above(dy)).isAir,
+                    "Underwater arrival introduced an air pocket at ${floorPos.above(dy)}")
+            }
+        }
+        helper.runAfterDelay(30) {
+            for (dx in listOf(-2, 2)) for (dz in listOf(-2, 2)) {
+                val shaft = floor.offset(dx, 2, dz)
+                helper.assertTrue(helper.level.getBlockState(shaft).`is`(Blocks.BUBBLE_COLUMN),
+                    "Expected a rising bubble column at $shaft")
+            }
+            helper.succeed()
+        }
+    }
+
     @GameTest(templateNamespace = "dimension_drink", template = "bootstrap/empty", batch = "obelisk_data", timeoutTicks = 200)
     fun naturally_generated_fonts_are_indexed_and_removed_with_the_block(helper: GameTestHelper) {
         val pos = helper.absolutePos(BlockPos(2, 2, 2))

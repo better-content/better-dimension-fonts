@@ -128,7 +128,8 @@ object DimensionalFontSiteGenerator {
         setBoxed(level, box, pedestal, Blocks.OXIDIZED_COPPER.defaultBlockState())
         placeAltarApproachStairs(level, box, center)
         val fontPos = center.above(3)
-        setBoxed(level, box, fontPos, ModBlocks.OBELISK.get().defaultBlockState())
+        setBoxed(level, box, fontPos, ModBlocks.OBELISK.get().defaultBlockState()
+            .setValue(com.bettercontent.dimensiondrink.content.ObeliskBlock.BOUND, true))
         for (dy in 1..FONT_CLEARANCE) {
             setBoxed(level, box, fontPos.above(dy), Blocks.AIR.defaultBlockState())
         }
@@ -309,17 +310,6 @@ object DimensionalFontSiteGenerator {
                 if (!groundState.isFaceSturdy(level, ground, Direction.UP)) continue
 
                 val hash = coordinateHash(siteSeed, x, z)
-                val pool = poolColumn(dx, dz)
-                if (pool != 0 && isNaturalPathGround(groundState)) {
-                    if (pool == 1) {
-                        setBoxed(level, box, ground.below(), Blocks.OXIDIZED_CUT_COPPER.defaultBlockState())
-                        setBoxed(level, box, ground, Blocks.WATER.defaultBlockState())
-                    } else {
-                        setBoxed(level, box, ground, Blocks.OXIDIZED_CUT_COPPER.defaultBlockState())
-                    }
-                    continue
-                }
-
                 val hive = if (definition.id == "bumblezone") hiveColumn(dx, dz) else 0
                 if (hive != 0 && isNaturalPathGround(groundState)) {
                     val wax = optionalBlock("the_bumblezone", "the_bumblezone:ancient_wax_bricks")
@@ -364,18 +354,6 @@ object DimensionalFontSiteGenerator {
                     val state = preparedState(block)
                     if (state.canSurvive(level, above)) setBoxed(level, box, above, state)
                 }
-            }
-        }
-    }
-
-    private fun poolColumn(dx: Int, dz: Int): Int {
-        val centers = listOf(15 to 8, -15 to -7, 8 to -16)
-        return centers.maxOf { (x, z) ->
-            val squared = (dx - x) * (dx - x) + (dz - z) * (dz - z)
-            when {
-                squared <= 4 -> 1
-                squared <= 9 -> 2
-                else -> 0
             }
         }
     }

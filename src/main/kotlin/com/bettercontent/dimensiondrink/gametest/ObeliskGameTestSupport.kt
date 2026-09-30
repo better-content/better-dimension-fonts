@@ -2163,7 +2163,6 @@ object ObeliskGameTestSupport {
         }
 
         var ringTiles = 0
-        var waterTiles = 0
         var candles = 0
         var trophies = 0
         val expectedTrophy = expectedTrophyOverride ?: when (label) {
@@ -2178,7 +2177,6 @@ object ObeliskGameTestSupport {
                     val state = helper.level.getBlockState(pos)
                     if (DimensionalFontSiteGenerator.isRingColumn(dx, dz) &&
                         (state.`is`(Blocks.OXIDIZED_CUT_COPPER) || state.`is`(Blocks.PACKED_MUD))) ringTiles++
-                    if (state.`is`(Blocks.WATER)) waterTiles++
                     if (state.`is`(Blocks.WHITE_CANDLE) || state.`is`(Blocks.YELLOW_CANDLE) ||
                         state.`is`(Blocks.RED_CANDLE) || state.`is`(Blocks.GREEN_CANDLE) ||
                         state.`is`(Blocks.LIGHT_BLUE_CANDLE)) {
@@ -2196,7 +2194,6 @@ object ObeliskGameTestSupport {
             }
         }
         helper.assertTrue(ringTiles >= 12, "Expected $label font to have a circular verdigris ring; found $ringTiles tiles")
-        helper.assertTrue(waterTiles >= 3, "Expected $label font field to include decorative water pools")
         helper.assertTrue(candles >= 4, "Expected $label font field to include lit candles")
         if (requireDimensionalTrophy && expectedTrophy != null) {
             helper.assertTrue(trophies >= 1, "Expected $label font field to display its dimensional trophy")
@@ -2258,7 +2255,7 @@ object ObeliskGameTestSupport {
     private fun prepareTestObelisk(obelisk: ObeliskBlockEntity) {
         obelisk.setActiveRun(null)
         obelisk.cooldownUntilGameTime = 0L
-        obelisk.setTargetTemplate("end")
+        obelisk.setDefinition("end")
         val handler = obelisk.getInternalItemHandler()
         for (slot in 0 until handler.slots) {
             handler.setStackInSlot(slot, ItemStack.EMPTY)

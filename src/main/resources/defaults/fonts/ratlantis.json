@@ -15,8 +15,8 @@
     "pathBlocks": ["minecraft:oxidized_cut_copper", "rats:marbled_cheese_brick"],
     "cultivationBlocks": ["minecraft:oxidized_copper"],
     "structureBlocks": ["rats:marbled_cheese_brick", "rats:marbled_cheese_tile", "rats:marbled_cheese_pillar"],
-    "trophyBlocks": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_rat_head", "minecraft:lantern"],
-    "decorations": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_rat_head", "minecraft:green_candle"]
+    "trophyBlocks": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_chiseled", "rats:marbled_cheese_brick_mossy", "minecraft:lantern", "rats:potted_pirat_sapling"],
+    "decorations": ["rats:marbled_cheese_brick_chiseled", "rats:marbled_cheese_chiseled", "rats:marbled_cheese_brick_cracked", "rats:marbled_cheese_brick_mossy", "minecraft:lantern", "rats:potted_pirat_sapling", "minecraft:green_candle"]
   },
   "rewardTableId": "no_bonus",
   "maxCharge": 15000,

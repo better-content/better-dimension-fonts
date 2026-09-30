@@ -128,7 +128,7 @@
     {Name: "minecraft:stripped_warped_stem", Properties: {axis: "x"}},
     {Name: "minecraft:stripped_warped_stem", Properties: {axis: "y"}},
     {Name: "minecraft:waxed_cut_copper_slab", Properties: {type: "bottom", waterlogged: "false"}},
-    {Name: "dimension_drink:dimensional_font"},
+    {Name: "dimension_drink:dimensional_font", Properties: {bound: "true", waterlogged: "false"}},
     {Name: "minecraft:soul_lantern", Properties: {hanging: "true", waterlogged: "false"}}
   ]
 }

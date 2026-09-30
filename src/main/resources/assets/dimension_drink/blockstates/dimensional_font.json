@@ -1,7 +1,6 @@
 {
-  "variants": {
-    "": {
-      "model": "dimension_drink:block/dimensional_font"
-    }
-  }
+  "multipart": [
+    { "when": { "bound": "true" }, "apply": { "model": "dimension_drink:block/dimensional_font" } },
+    { "when": { "bound": "false" }, "apply": { "model": "dimension_drink:block/unbound_font" } }
+  ]
 }

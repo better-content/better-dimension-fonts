@@ -7,6 +7,7 @@ import com.bettercontent.dimensiondrink.api.RunService
 import com.bettercontent.dimensiondrink.api.event.FontAggregateReturnEvent
 import com.bettercontent.dimensiondrink.api.event.FontEnterEvent
 import com.bettercontent.dimensiondrink.content.ObeliskBlockEntity
+import com.bettercontent.dimensiondrink.registry.ModBlocks
 import com.bettercontent.dimensiondrink.data.CanonicalTargetResolver
 import com.bettercontent.dimensiondrink.data.ObeliskDataManager
 import com.bettercontent.dimensiondrink.runtime.backend.ActiveSiteHandle
@@ -139,6 +140,10 @@ object RunRegistry : RunService {
     internal fun recordMonsterDeath(server: MinecraftServer, levelKey: ResourceKey<Level>, pos: BlockPos): Boolean = false
 
     fun activateObelisk(player: ServerPlayer, obelisk: ObeliskBlockEntity, pos: BlockPos): String? {
+        if (!obelisk.blockState.`is`(ModBlocks.OBELISK.get()) ||
+            !obelisk.blockState.getValue(com.bettercontent.dimensiondrink.content.ObeliskBlock.BOUND)) {
+            return "This harvested font is unbound and cannot open an expedition."
+        }
         val current = mutableRunForPlayer(player.uuid)
         if (current != null) {
             return if (current.obeliskId == obelisk.obeliskId) {

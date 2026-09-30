@@ -221,7 +221,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
             findSafeFloor(level, desired.x, desired.z, config.spawnSearchRadius)
                 ?: BlockPos(desired.x, emergencySpawnY(level) - 1, desired.z)
         }
-        ensureArrivalAnchor(level, record, resolvedFloor)
+        ensureArrivalAnchor(level, resolvedFloor)
         val spawn = resolvedFloor.above(2).immutable()
         record.spawnPos = spawn
         record.siteCenter = spawn
@@ -230,20 +230,27 @@ object CanonicalDimensionBackend : RunWorldBackend {
         return spawn
     }
 
-    private fun ensureArrivalAnchor(level: ServerLevel, record: RunSiteRecord, floor: BlockPos) {
+    internal fun ensureArrivalAnchor(level: ServerLevel, floor: BlockPos) {
+        val submerged = level.getFluidState(floor.above()).`is`(net.minecraft.tags.FluidTags.WATER)
         ArrivalSiteLayout.floorOffsets().forEach { offset ->
             val floorPos = floor.offset(offset)
-            level.setBlock(floorPos, Blocks.OXIDIZED_COPPER.defaultBlockState(), 3)
+            val corner = kotlin.math.abs(offset.x) == ArrivalSiteLayout.FLOOR_RADIUS &&
+                kotlin.math.abs(offset.z) == ArrivalSiteLayout.FLOOR_RADIUS
+            level.setBlock(floorPos,
+                if (submerged && corner) Blocks.SOUL_SAND.defaultBlockState() else Blocks.OXIDIZED_COPPER.defaultBlockState(), 3)
             var supportPos = floorPos.below()
             while (supportPos.y >= level.minBuildHeight && !level.getBlockState(supportPos).isSolid) {
                 level.setBlock(supportPos, Blocks.OXIDIZED_COPPER.defaultBlockState(), 3)
                 supportPos = supportPos.below()
             }
-            for (dy in 1..ArrivalSiteLayout.CLEARANCE_HEIGHT) {
-                level.setBlock(floorPos.above(dy), Blocks.AIR.defaultBlockState(), 3)
+            if (!submerged) {
+                for (dy in 1..ArrivalSiteLayout.CLEARANCE_HEIGHT) {
+                    level.setBlock(floorPos.above(dy), Blocks.AIR.defaultBlockState(), 3)
+                }
             }
         }
-        level.setBlock(floor.above(), ModBlocks.RETURN_FONT.get().defaultBlockState(), 3)
+        level.setBlock(floor.above(), ModBlocks.RETURN_FONT.get().defaultBlockState()
+            .setValue(com.bettercontent.dimensiondrink.content.ObeliskBlock.WATERLOGGED, submerged), 3)
     }
 
     private fun normalizedArrivalTeleportPos(level: ServerLevel, spawn: BlockPos): BlockPos {
@@ -287,7 +294,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
         return null
     }
 
-    private fun findSafeFloor(level: ServerLevel, x: Int, z: Int): BlockPos? {
+    internal fun findSafeFloor(level: ServerLevel, x: Int, z: Int): BlockPos? {
         level.getChunk(BlockPos(x, level.minBuildHeight, z))
         val highestFeetY = level.maxBuildHeight - SPAWN_CLEARANCE - 1
         for (y in highestFeetY downTo level.minBuildHeight + 1) {
@@ -307,9 +314,33 @@ object CanonicalDimensionBackend : RunWorldBackend {
             ) {
                 return floor
             }
+            if (floorState.isSolid && !floorState.`is`(Blocks.BEDROCK) &&
+                floorFluid.isEmpty && level.getFluidState(feet).`is`(net.minecraft.tags.FluidTags.WATER) &&
+                level.getFluidState(head).`is`(net.minecraft.tags.FluidTags.WATER) &&
+                bubbleShaftsReachSurface(level, floor)) {
+                return floor
+            }
         }
         return null
     }
+
+    private fun bubbleShaftsReachSurface(level: ServerLevel, floor: BlockPos): Boolean =
+        listOf(-ArrivalSiteLayout.FLOOR_RADIUS, ArrivalSiteLayout.FLOOR_RADIUS).all { dx ->
+            listOf(-ArrivalSiteLayout.FLOOR_RADIUS, ArrivalSiteLayout.FLOOR_RADIUS).all shaft@{ dz ->
+                var sawWater = false
+                for (y in floor.y + 1 until level.maxBuildHeight) {
+                    val pos = BlockPos(floor.x + dx, y, floor.z + dz)
+                    val state = level.getBlockState(pos)
+                    if (state.`is`(Blocks.WATER) && level.getFluidState(pos).isSource) {
+                        sawWater = true
+                    } else {
+                        if (!state.isAir) return@shaft false
+                        break
+                    }
+                }
+                sawWater
+            }
+        }
 
     private fun emergencySpawnY(level: ServerLevel): Int {
         return max(level.minBuildHeight + 80, 72).coerceAtMost(level.maxBuildHeight - 4)

@@ -122,6 +122,7 @@ class ObeliskBlockEntity(
     fun setDefinition(definitionId: String) {
         advancePassiveRegenerationNow()
         this.definitionId = definitionId
+        markBound()
         registerNaturalFont()
         setChanged()
         syncToClients()
@@ -149,6 +150,7 @@ class ObeliskBlockEntity(
     fun initializeGeneratedFont(definitionId: String, maxCharge: Double) {
         this.definitionId = definitionId
         isNaturallyGenerated = true
+        markBound()
         generatedMaxCharge = maxCharge.coerceAtLeast(getDefinitionMaxCharge())
         chargeStoredInternal = getModifiedMaxStorage()
         fractionalRegenCarry = 0.0
@@ -225,6 +227,7 @@ class ObeliskBlockEntity(
     }
 
     private fun serverAmbientTick(tickLevel: ServerLevel, tickPos: BlockPos) {
+        if (isNaturallyGenerated) markBound()
         if (blockState.`is`(ModBlocks.RETURN_FONT.get()) || isNaturallyGenerated) return
         advancePassiveRegeneration(tickLevel.gameTime)
         if (chargeStoredInternal <= 0) return
@@ -233,6 +236,12 @@ class ObeliskBlockEntity(
         renewNearbyCopperOxidation(tickLevel)?.let { renewedPos ->
             playCopperRenewalEffects(tickLevel, renewedPos)
         }
+    }
+
+    private fun markBound() {
+        val current = level ?: return
+        if (!blockState.`is`(ModBlocks.OBELISK.get()) || blockState.getValue(ObeliskBlock.BOUND)) return
+        current.setBlock(blockPos, blockState.setValue(ObeliskBlock.BOUND, true), Block.UPDATE_CLIENTS)
     }
 
     fun scrapeAltarCopperOxidation(currentLevel: Level): Int {

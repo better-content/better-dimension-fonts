@@ -374,7 +374,8 @@ class ObeliskFeature(codec: Codec<NoneFeatureConfiguration>) : Feature<NoneFeatu
         }
 
         private fun placeGeneratedFont(level: LevelAccessor, site: BuiltSite, definition: ObeliskDefinition): Boolean {
-            if (!level.setBlock(site.fontPos, ModBlocks.OBELISK.get().defaultBlockState(), 3)) return false
+            if (!level.setBlock(site.fontPos, ModBlocks.OBELISK.get().defaultBlockState()
+                    .setValue(com.bettercontent.dimensiondrink.content.ObeliskBlock.BOUND, true), 3)) return false
             val font = level.getBlockEntity(site.fontPos) as? ObeliskBlockEntity ?: return false
             font.setDefinition(definition.id)
             font.setGeneratedMaxCharge(site.maxCharge)

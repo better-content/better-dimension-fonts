@@ -20,7 +20,7 @@ class VillageFontShrineTest {
         assertEquals(7, size.getInt(0), "Village shrine should keep the original altar width")
         assertEquals(5, size.getInt(1), "Village shrine should keep the original altar height")
         assertEquals(7, size.getInt(2), "Village shrine should keep the original altar depth")
-        assertEquals(BlockStateData("dimension_drink:dimensional_font"), template[BlockPos3(3, 3, 3)], "Village shrine should place the font at the altar center")
+        assertEquals(BlockStateData("dimension_drink:dimensional_font", mapOf("bound" to "true", "waterlogged" to "false")), template[BlockPos3(3, 3, 3)], "Village shrine should place a bound font at the altar center")
         assertEquals(1, template.values.count { it.name == "dimension_drink:dimensional_font" }, "Village shrine should contain exactly one dimensional font")
 
         for (dx in -3..3) {
