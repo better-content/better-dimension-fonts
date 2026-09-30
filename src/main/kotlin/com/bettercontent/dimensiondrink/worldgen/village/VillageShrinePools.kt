@@ -13,7 +13,8 @@ import net.minecraftforge.event.server.ServerAboutToStartEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
 
 object VillageShrinePools {
-    private const val TARGET_ATTEMPT_RATE = 0.0025
+    // Twelve decor attempts give roughly one shrine per five newly generated villages.
+    private const val TARGET_ATTEMPT_RATE = 0.01842347
     private const val SHRINE_WEIGHT = 1
 
     data class ShrinePoolTarget(
