@@ -114,7 +114,13 @@ object FontCompanions {
     fun onLeave(event: EntityLeaveLevelEvent) {
         val entity = event.entity as? Mob ?: return
         val level = event.level as? ServerLevel ?: return
-        if (entity.uuid in inFlight || !entity.isAlive) return
+        if (entity.uuid in inFlight) return
+        if (entity.removalReason == Entity.RemovalReason.DISCARDED ||
+            entity.removalReason == Entity.RemovalReason.KILLED) {
+            CompanionSavedData.get(level.server).remove(entity.uuid)
+            return
+        }
+        if (!entity.isAlive) return
         track(entity, level)
     }
 
