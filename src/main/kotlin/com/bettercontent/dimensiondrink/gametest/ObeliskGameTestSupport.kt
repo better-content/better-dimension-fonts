@@ -47,6 +47,7 @@ import net.minecraft.network.protocol.game.ServerboundKeepAlivePacket
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.tags.FluidTags
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.effect.MobEffects
@@ -2146,6 +2147,12 @@ object ObeliskGameTestSupport {
                 clearanceState.isAir,
                 "Expected $label font at $fontPos to keep clear space above it, found $clearanceState at $clearancePos"
             )
+        }
+        // These fixtures sit below untouched terrain; inspect the constructed site band.
+        for (dx in -18..18) for (dz in -18..18) for (dy in -2..8) {
+            val pos = cultivationFloorCenter.offset(dx, dy, dz)
+            helper.assertTrue(!helper.level.getFluidState(pos).`is`(FluidTags.WATER),
+                "Expected $label Overworld Font site to have no water pool at $pos")
         }
         if (requireReliquaryLandscaping) return
         val altarCenter = middleTierCenter
