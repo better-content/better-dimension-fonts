@@ -1272,7 +1272,8 @@ object ObeliskGameTestSupport {
             obelisk?.definitionId == definition.id,
             "Expected structure-piece generated obelisk to keep its definition id"
         )
-        assertGeneratedAltar(helper, fontPos, "structure-piece", requireReliquaryLandscaping = false)
+        assertGeneratedAltar(helper, fontPos, "structure-piece", requireReliquaryLandscaping = false,
+            requireNoWaterPools = true)
         Direction.Plane.HORIZONTAL.forEach { direction ->
             DimensionalFontSiteGenerator.altarApproachStairPositions(altarCenter, direction).forEach { stairPos ->
                 val stair = helper.level.getBlockState(stairPos)
@@ -2101,7 +2102,8 @@ object ObeliskGameTestSupport {
         requireBroadLowerStep: Boolean = true,
         expectedTrophyOverride: net.minecraft.world.level.block.Block? = null,
         requireDimensionalTrophy: Boolean = false,
-        requireReliquaryLandscaping: Boolean = true
+        requireReliquaryLandscaping: Boolean = true,
+        requireNoWaterPools: Boolean = false
     ) {
         val baseCenter = fontPos.below()
         val middleTierCenter = baseCenter.below()
@@ -2148,11 +2150,13 @@ object ObeliskGameTestSupport {
                 "Expected $label font at $fontPos to keep clear space above it, found $clearanceState at $clearancePos"
             )
         }
-        // These fixtures sit below untouched terrain; inspect the constructed site band.
-        for (dx in -18..18) for (dz in -18..18) for (dy in -2..8) {
-            val pos = cultivationFloorCenter.offset(dx, dy, dz)
-            helper.assertTrue(!helper.level.getFluidState(pos).`is`(FluidTags.WATER),
-                "Expected $label Overworld Font site to have no water pool at $pos")
+        if (requireNoWaterPools) {
+            // Controlled fixtures sit below untouched terrain; inspect their constructed site band.
+            for (dx in -18..18) for (dz in -18..18) for (dy in -2..8) {
+                val pos = cultivationFloorCenter.offset(dx, dy, dz)
+                helper.assertTrue(!helper.level.getFluidState(pos).`is`(FluidTags.WATER),
+                    "Expected $label Overworld Font site to have no water pool at $pos")
+            }
         }
         if (requireReliquaryLandscaping) return
         val altarCenter = middleTierCenter

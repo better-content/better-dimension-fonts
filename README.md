@@ -39,7 +39,7 @@ Naturally generated Fonts are added to a saved discovery index as their chunks l
 
 New Overworld Font sites use a circular oxidized-copper court without water pools, candles, and biome-matched stripped-log supports only where trees grow. Bumblezone sites include dense wax and hive clusters. Ratlantis sites use varied marbled-cheese masonry and small decorations instead of Automaton Heads. Font maps display their destination's salience aspects; themed spirit sellers offer only matching surveyed destinations. Underwater return Fonts preserve the water and use four soul-sand corners as bubble shafts to the surface.
 
-Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. Its decor-pool rate targets roughly one shrine in five newly generated villages when a village makes twelve decor placement attempts; actual rates vary with village layout.
+Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. The shrine joins their house pools with a street-facing entrance. Its selection rate targets roughly one shrine in five newly generated villages when a village makes twelve house placement attempts; actual rates vary with village layout and available space.
 
 The craftable Font Pourer sits two blocks above a Font, leaving one air block for a visible pour. It accepts the matching Nether, Aether, Bumblezone, or Ratlantis Libation by bucket or fluid automation and restores charge only while a run is active. One bucket supplies 48,000 charge, about ten extra minutes at the current 80 charge per second drain; a nominal 15,000-charge Font lasts roughly three minutes before entry costs. The Font itself has no fluid capability.
 

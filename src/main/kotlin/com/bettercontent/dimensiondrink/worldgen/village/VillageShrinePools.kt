@@ -13,26 +13,27 @@ import net.minecraftforge.event.server.ServerAboutToStartEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
 
 object VillageShrinePools {
-    // Twelve decor attempts give roughly one shrine per five newly generated villages.
+    // Twelve house attempts give roughly one shrine per five newly generated villages.
     private const val TARGET_ATTEMPT_RATE = 0.01842347
-    private const val SHRINE_WEIGHT = 1
+    private const val SHRINE_WEIGHT = 2
 
     data class ShrinePoolTarget(
         val style: String,
         val poolId: ResourceLocation,
         val templateId: ResourceLocation,
         val basePoolWeight: Int,
+        val shrineWeight: Int,
         val placementChance: Float
     ) {
-        fun estimatedAttemptRate(): Double = SHRINE_WEIGHT.toDouble() / (basePoolWeight + SHRINE_WEIGHT) * placementChance
+        fun estimatedAttemptRate(): Double = shrineWeight.toDouble() / (basePoolWeight + shrineWeight) * placementChance
     }
 
     val TARGETS: List<ShrinePoolTarget> = listOf(
-        target("plains", 7),
-        target("desert", 28),
-        target("savanna", 17),
-        target("snowy", 27),
-        target("taiga", 39)
+        target("plains", 87),
+        target("desert", 72),
+        target("savanna", 81),
+        target("snowy", 68),
+        target("taiga", 76)
     )
 
     @SubscribeEvent
@@ -72,12 +73,13 @@ object VillageShrinePools {
 
     private fun target(style: String, basePoolWeight: Int): ShrinePoolTarget {
         val totalWeight = basePoolWeight + SHRINE_WEIGHT
-        val chance = (TARGET_ATTEMPT_RATE * totalWeight).toFloat().coerceAtMost(1.0f)
+        val chance = (TARGET_ATTEMPT_RATE * totalWeight / SHRINE_WEIGHT).toFloat().coerceAtMost(1.0f)
         return ShrinePoolTarget(
             style = style,
-            poolId = ResourceLocation.fromNamespaceAndPath("minecraft", "village/$style/decor"),
+            poolId = ResourceLocation.fromNamespaceAndPath("minecraft", "village/$style/houses"),
             templateId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "village/font_shrine"),
             basePoolWeight = basePoolWeight,
+            shrineWeight = SHRINE_WEIGHT,
             placementChance = chance
         )
     }

@@ -22,6 +22,15 @@ class VillageFontShrineTest {
         assertEquals(7, size.getInt(2), "Village shrine should keep the original altar depth")
         assertEquals(BlockStateData("dimension_drink:dimensional_font", mapOf("bound" to "true", "waterlogged" to "false")), template[BlockPos3(3, 3, 3)], "Village shrine should place a bound font at the altar center")
         assertEquals(1, template.values.count { it.name == "dimension_drink:dimensional_font" }, "Village shrine should contain exactly one dimensional font")
+        assertEquals(BlockStateData("minecraft:jigsaw", mapOf("orientation" to "north_up")), template[BlockPos3(3, 0, 0)], "Village shrine should face its house-pool entrance toward the street")
+        val blocks = root.getList("blocks", Tag.TAG_COMPOUND.toInt())
+        val entrance = (0 until blocks.size).map(blocks::getCompound).single { block ->
+            val pos = block.getList("pos", Tag.TAG_INT.toInt())
+            pos.getInt(0) == 3 && pos.getInt(1) == 0 && pos.getInt(2) == 0
+        }.getCompound("nbt")
+        assertEquals("minecraft:building_entrance", entrance.getString("name"))
+        assertEquals("minecraft:building_entrance", entrance.getString("target"))
+        assertEquals("aligned", entrance.getString("joint"))
 
         for (dx in -3..3) {
             for (dz in -3..3) {
@@ -104,22 +113,24 @@ class VillageFontShrineTest {
     }
 
     @Test
-    fun shrinePoolTargetsStayDecorOnlyAndModeledRarityStaysInBand() {
+    fun shrinePoolTargetsUseHousesAndModeledRarityStaysInBand() {
         assertEquals(setOf("plains", "desert", "savanna", "snowy", "taiga"), VillageShrinePools.TARGETS.map { it.style }.toSet())
-        assertTrue(VillageShrinePools.TARGETS.all { it.poolId.namespace == "minecraft" && it.poolId.path.endsWith("/decor") }, "Shrine should append only to vanilla decor pools")
+        assertEquals(mapOf("plains" to 87, "desert" to 72, "savanna" to 81, "snowy" to 68, "taiga" to 76),
+            VillageShrinePools.TARGETS.associate { it.style to it.basePoolWeight })
+        assertTrue(VillageShrinePools.TARGETS.all { it.poolId.namespace == "minecraft" && it.poolId.path.endsWith("/houses") }, "Shrine should append only to vanilla house pools")
 
-        val decorAttemptWindows = listOf(8, 12, 16, 20)
+        val houseAttemptWindows = listOf(8, 12, 16, 20)
         VillageShrinePools.TARGETS.forEach { target ->
             val attemptRate = target.estimatedAttemptRate()
             assertTrue(attemptRate in 0.0183..0.0186, "Configured per-attempt shrine rate drifted for ${target.style}: $attemptRate")
 
-            decorAttemptWindows.forEach { attempts ->
+            houseAttemptWindows.forEach { attempts ->
                 val expectedVillageRate = 1.0 - (1.0 - attemptRate).pow(attempts.toDouble())
-                assertTrue(expectedVillageRate in 0.13..0.32, "Modeled village shrine rate for ${target.style} fell outside the target band with $attempts decor attempts: $expectedVillageRate")
+                assertTrue(expectedVillageRate in 0.13..0.32, "Modeled village shrine rate for ${target.style} fell outside the target band with $attempts house attempts: $expectedVillageRate")
             }
         }
 
-        val sampledRate = sampleVillageRate(VillageShrinePools.TARGETS.first(), villages = 20_000, decorAttempts = 12, seed = 90210L)
+        val sampledRate = sampleVillageRate(VillageShrinePools.TARGETS.first(), villages = 20_000, houseAttempts = 12, seed = 90210L)
         assertTrue(sampledRate in 0.18..0.22, "Deterministic shrine sampling should stay close to 1 shrine per 5 villages, observed=$sampledRate")
     }
 
@@ -179,16 +190,16 @@ class VillageFontShrineTest {
     private fun sampleVillageRate(
         target: VillageShrinePools.ShrinePoolTarget,
         villages: Int,
-        decorAttempts: Int,
+        houseAttempts: Int,
         seed: Long
     ): Double {
         val random = Random(seed)
         var shrineVillages = 0
-        val selectionBound = target.basePoolWeight + 1
+        val selectionBound = target.basePoolWeight + target.shrineWeight
         repeat(villages) {
             var foundShrine = false
-            for (attempt in 0 until decorAttempts) {
-                if (random.nextInt(selectionBound) == 0 && random.nextDouble() <= target.placementChance.toDouble()) {
+            for (attempt in 0 until houseAttempts) {
+                if (random.nextInt(selectionBound) < target.shrineWeight && random.nextDouble() <= target.placementChance.toDouble()) {
                     foundShrine = true
                     break
                 }
