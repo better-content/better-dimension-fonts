@@ -158,7 +158,9 @@ object DimensionalFontSiteGenerator {
         val strippedLog = strippedLogForBiome(level, center)
         if (strippedLog != null) {
             listOf(-2 to -2, -2 to 2, 2 to -2, 2 to 2).forEach { (dx, dz) ->
-                for (y in center.y + 2..supportY) {
+                // The corner floor is at center.y. Start directly above it so the
+                // timber reaches the altar instead of floating one block above it.
+                for (y in center.y + 1..supportY) {
                     val support = BlockPos(center.x + dx, y, center.z + dz)
                     var state = strippedLog.defaultBlockState()
                     if (state.hasProperty(BlockStateProperties.AXIS)) {

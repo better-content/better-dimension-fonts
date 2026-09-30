@@ -2166,6 +2166,10 @@ object ObeliskGameTestSupport {
             helper.assertTrue(supportId.startsWith("stripped_") &&
                 (supportId.endsWith("_log") || supportId.endsWith("_stem")),
                 "Expected $label vertical supports to use biome-matched stripped wood, found $support")
+            val postBase = helper.level.getBlockState(altarCenter.offset(2, 2, 2))
+            helper.assertTrue(postBase.block == support.block &&
+                !helper.level.getBlockState(altarCenter.offset(2, 1, 2)).isAir,
+                "Expected $label wood post to meet the solid altar floor")
             helper.assertTrue(!helper.level.getBlockState(altarCenter.offset(2, 4, 0)).isAir,
                 "Expected $label tree-biome support to carry a verdigris roof")
         } else {
