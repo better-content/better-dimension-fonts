@@ -7,6 +7,7 @@ import com.bettercontent.dimensiondrink.content.FontHarvestEvents
 import com.bettercontent.dimensiondrink.gametest.ObeliskGameTestRegistrar
 import com.bettercontent.dimensiondrink.registry.ModRegistries
 import com.bettercontent.dimensiondrink.runtime.player.VanillaPortalBlocker
+import com.bettercontent.dimensiondrink.runtime.player.FontCompanions
 import com.bettercontent.dimensiondrink.runtime.run.FontChunkTicketManager
 import com.bettercontent.dimensiondrink.runtime.run.RunRegistry
 import com.bettercontent.dimensiondrink.runtime.ui.RunBossBarManager
@@ -28,6 +29,7 @@ class DimensionDrinkMod {
         modBus.register(ObeliskGameTestRegistrar)
         modBus.addListener(::onCommonSetup)
         MinecraftForge.EVENT_BUS.register(VanillaPortalBlocker)
+        MinecraftForge.EVENT_BUS.register(FontCompanions)
         MinecraftForge.EVENT_BUS.register(FontHarvestEvents)
         MinecraftForge.EVENT_BUS.register(RunRegistry)
         MinecraftForge.EVENT_BUS.register(RunBossBarManager)

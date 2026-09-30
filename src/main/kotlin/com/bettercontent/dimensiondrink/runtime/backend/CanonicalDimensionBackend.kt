@@ -6,6 +6,7 @@ import com.bettercontent.dimensiondrink.data.ObeliskDataManager
 import com.bettercontent.dimensiondrink.data.ObeliskDefinition
 import com.bettercontent.dimensiondrink.registry.ModBlocks
 import com.bettercontent.dimensiondrink.runtime.player.FontTravelAuthorization
+import com.bettercontent.dimensiondrink.runtime.player.FontCompanions
 import com.bettercontent.dimensiondrink.runtime.run.RunRegistry
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
@@ -357,7 +358,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
                 record.siteBounds.maxY.toDouble(),
                 record.siteBounds.maxZ.toDouble()
             )
-        ).forEach(Mob::discard)
+        ).filterNot(FontCompanions::shouldPreserveOnRunClose).forEach(Mob::discard)
     }
 
     private fun boundsFor(center: BlockPos, level: ServerLevel, config: BackendConfig): SiteBounds {

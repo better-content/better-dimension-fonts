@@ -18,6 +18,7 @@ import com.bettercontent.dimensiondrink.runtime.backend.PreparedSiteStatus
 import com.bettercontent.dimensiondrink.runtime.backend.ReturnRunResult
 import com.bettercontent.dimensiondrink.runtime.backend.RunBackendManager
 import com.bettercontent.dimensiondrink.runtime.player.FontTravelAuthorization
+import com.bettercontent.dimensiondrink.runtime.player.FontCompanions
 import com.bettercontent.dimensiondrink.runtime.ui.RunBossBarManager
 import com.mojang.logging.LogUtils
 import net.minecraft.core.BlockPos
@@ -76,6 +77,7 @@ object RunRegistry : RunService {
 
     fun returnPlayer(player: ServerPlayer, disqualify: Boolean = true): Boolean {
         val record = mutableRunForPlayer(player.uuid)
+        val companionSource = player.serverLevel()
         val returnContext = record
             // This event records a completed Font extraction, not a challenge reward. A player
             // who leaves through the return font (or is extracted as a font expires) still made
@@ -92,6 +94,7 @@ object RunRegistry : RunService {
 
         when (result) {
             ReturnRunResult.Returned -> {
+                FontCompanions.onReturn(player, companionSource)
                 // Assignment is consumed only after the backend confirms transport. A failed
                 // return remains retryable and must not lose the player's run binding.
                 detachPlayer(record, player.uuid, disqualify)
@@ -386,6 +389,8 @@ object RunRegistry : RunService {
     ): String {
         val handle = activeHandle(server, record)
             ?: return "The dimensional font destination is unavailable."
+        val companionSource = player.serverLevel()
+        val companionSourcePos = player.position()
         return when (val result = backend.enterPlayer(player, handle)) {
             EnterRunResult.Entered -> {
                 if (!chargeSource.drainCharge(entryCost)) {
@@ -403,6 +408,7 @@ object RunRegistry : RunService {
                 refreshSpawnPos(server, record)
                 RunSavedData.get(server).upsert(record)
                 totalEntries++
+                FontCompanions.onEnter(player, companionSource, companionSourcePos)
                 postFontEnterEvent(player, record)
                 "Drinking from ${displayName(record.definitionId)}..."
             }
@@ -428,16 +434,15 @@ object RunRegistry : RunService {
             val player = server.playerList.getPlayer(playerId)
             if (player != null) {
                 returningPlayers += playerId
+                val companionSource = player.serverLevel()
                 val result = try {
                     backend.returnPlayer(player)
                 } finally {
                     returningPlayers -= playerId
                 }
-                if (
-                    result == ReturnRunResult.Returned &&
-                    returnContext != null
-                ) {
-                    postAggregateReturnEvent(player, record, returnContext)
+                if (result == ReturnRunResult.Returned) {
+                    FontCompanions.onReturn(player, companionSource)
+                    if (returnContext != null) postAggregateReturnEvent(player, record, returnContext)
                 }
             }
             backend.clearPlayer(playerId)
