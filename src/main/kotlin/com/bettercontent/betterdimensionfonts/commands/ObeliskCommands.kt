@@ -141,7 +141,11 @@ object ObeliskCommands {
                                 "harness Font block entity missing at $spawnPos"
                             }
                             stage = "validate_player_input"
-                            check(player.mainHandItem.isEmpty && !player.isShiftKeyDown) { "harness Font requires an empty hand and no sneaking" }
+                            // Native Font round trips leave held/sneak state client-controlled
+                            // across dimension changes. Normalize it before simulating use.
+                            player.stopUsingItem()
+                            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
+                            player.setShiftKeyDown(false)
                             val level = player.serverLevel()
                             val state = level.getBlockState(spawnPos)
                             stage = "validate_block_state"
