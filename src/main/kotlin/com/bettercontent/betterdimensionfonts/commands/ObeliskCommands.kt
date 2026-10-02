@@ -129,23 +129,39 @@ object ObeliskCommands {
                     .then(Commands.argument("template", StringArgumentType.word()).executes { ctx ->
                         val player = ctx.source.playerOrException
                         val template = StringArgumentType.getString(ctx, "template")
-                        val pos = debugSpawnPos(player.serverLevel(), player.blockPosition())
-                        if (spawnDebugObelisk(player, template) != 1) return@executes 0
-                        check(player.serverLevel().getBlockEntity(pos) is ObeliskBlockEntity) {
-                            "harness Font block entity missing at $pos"
+                        var stage = "locate_spawn"
+                        var pos: BlockPos? = null
+                        try {
+                            val spawnPos = debugSpawnPos(player.serverLevel(), player.blockPosition())
+                            pos = spawnPos
+                            stage = "spawn_obelisk"
+                            if (spawnDebugObelisk(player, template) != 1) return@executes 0
+                            stage = "validate_block_entity"
+                            check(player.serverLevel().getBlockEntity(spawnPos) is ObeliskBlockEntity) {
+                                "harness Font block entity missing at $spawnPos"
+                            }
+                            stage = "validate_player_input"
+                            check(player.mainHandItem.isEmpty && !player.isShiftKeyDown) { "harness Font requires an empty hand and no sneaking" }
+                            val level = player.serverLevel()
+                            val state = level.getBlockState(spawnPos)
+                            stage = "validate_block_state"
+                            check(state.block === ModBlocks.OBELISK.get()) { "harness Font block missing at $spawnPos" }
+                            stage = "activate_obelisk"
+                            val result = state.use(level, player, InteractionHand.MAIN_HAND,
+                                BlockHitResult(Vec3.atCenterOf(spawnPos), Direction.UP, spawnPos, false))
+                            stage = "validate_interaction"
+                            check(result == InteractionResult.CONSUME || result == InteractionResult.SUCCESS) {
+                                "harness Font interaction was not consumed: $result"
+                            }
+                            stage = "validate_active_run"
+                            check(RunRegistry.getRun(player.uuid) != null) { "harness Font interaction did not bind the player" }
+                            logger.info("BC_FONT_HARNESS_ENTER player={} template={} origin={}", player.gameProfile.name, template, spawnPos)
+                            1
+                        } catch (failure: Throwable) {
+                            logger.error("BC_FONT_HARNESS_ENTER_FAILED player={} template={} stage={} origin={}",
+                                player.gameProfile.name, template, stage, pos, failure)
+                            throw failure
                         }
-                        check(player.mainHandItem.isEmpty && !player.isShiftKeyDown) { "harness Font requires an empty hand and no sneaking" }
-                        val level = player.serverLevel()
-                        val state = level.getBlockState(pos)
-                        check(state.block === ModBlocks.OBELISK.get()) { "harness Font block missing at $pos" }
-                        val result = state.use(level, player, InteractionHand.MAIN_HAND,
-                            BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false))
-                        check(result == InteractionResult.CONSUME || result == InteractionResult.SUCCESS) {
-                            "harness Font interaction was not consumed: $result"
-                        }
-                        check(RunRegistry.getRun(player.uuid) != null) { "harness Font interaction did not bind the player" }
-                        logger.info("BC_FONT_HARNESS_ENTER player={} template={} origin={}", player.gameProfile.name, template, pos)
-                        1
                     })
             )
             root.then(Commands.literal("harness_return").executes { ctx ->
