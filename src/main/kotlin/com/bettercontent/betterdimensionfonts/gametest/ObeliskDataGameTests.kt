@@ -247,10 +247,10 @@ class ObeliskDataGameTests {
 
     @GameTest(templateNamespace = "better_dimension_fonts", template = "bootstrap/empty", batch = "obelisk_data", timeoutTicks = 200)
     fun font_map_rotation_prioritizes_unsold_types_and_cycles(helper: GameTestHelper) {
-        val eligible = setOf("nether", "bumblezone", "ratlantis")
+        val eligible = setOf("nether", "bumblezone", "aether")
         val first = DimensionalFontMapTrades.advanceSoldTypes(emptySet(), "nether", eligible)
         val second = DimensionalFontMapTrades.advanceSoldTypes(first, "bumblezone", eligible)
-        val completed = DimensionalFontMapTrades.advanceSoldTypes(second, "ratlantis", eligible)
+        val completed = DimensionalFontMapTrades.advanceSoldTypes(second, "aether", eligible)
         helper.assertTrue(first == setOf("nether"), "Expected the first sold type to be retained")
         helper.assertTrue(second == setOf("nether", "bumblezone"), "Expected distinct sold types to accumulate")
         helper.assertTrue(completed.isEmpty(), "Expected type history to reset after a complete cycle")

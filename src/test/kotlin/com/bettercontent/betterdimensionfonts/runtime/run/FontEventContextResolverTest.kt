@@ -12,7 +12,6 @@ class FontEventContextResolverTest {
             "minecraft:the_nether" to "minecraft:netherrack",
             "aether:the_aether" to "aether:holystone",
             "the_bumblezone:the_bumblezone" to "the_bumblezone:pollen_puff",
-            "rats:ratlantis" to "rats:marbled_cheese_raw",
             "minecraft:the_end" to "minecraft:end_stone",
             "minecraft:overworld" to "minecraft:stone"
         )

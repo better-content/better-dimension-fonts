@@ -379,7 +379,6 @@ object DimensionalFontSiteGenerator {
     private fun candleFor(definition: ObeliskDefinition): Block = when (definition.id) {
         "bumblezone" -> Blocks.YELLOW_CANDLE
         "nether" -> Blocks.RED_CANDLE
-        "ratlantis" -> Blocks.GREEN_CANDLE
         "aether" -> Blocks.LIGHT_BLUE_CANDLE
         else -> Blocks.WHITE_CANDLE
     }
@@ -392,7 +391,6 @@ object DimensionalFontSiteGenerator {
             "warped_forest" in path -> Blocks.STRIPPED_WARPED_STEM
             biomeId?.namespace == "aether" && path.startsWith("skyroot_") ->
                 optionalBlock("aether", "aether:stripped_skyroot_log")
-            biomeId?.namespace == "rats" && path == "ratlantis" -> Blocks.STRIPPED_JUNGLE_LOG
             "mangrove" in path -> Blocks.STRIPPED_MANGROVE_LOG
             "cherry" in path -> Blocks.STRIPPED_CHERRY_LOG
             "dark_forest" in path || "dark_wood" in path -> Blocks.STRIPPED_DARK_OAK_LOG

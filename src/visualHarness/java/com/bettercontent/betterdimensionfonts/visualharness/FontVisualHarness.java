@@ -34,7 +34,7 @@ public final class FontVisualHarness {
             .named(ResourceLocation.fromNamespaceAndPath(MOD_ID, "capture"))
             .networkProtocolVersion(() -> "1")
             .clientAcceptedVersions("1"::equals).serverAcceptedVersions("1"::equals).simpleChannel();
-    private static final List<String> FONTS = List.of("nether", "aether", "bumblezone", "ratlantis");
+    private static final List<String> FONTS = List.of("nether", "aether", "bumblezone");
     private static BlockPos center;
 
     public FontVisualHarness() {
@@ -65,7 +65,7 @@ public final class FontVisualHarness {
 
     private static int prepare(final ServerPlayer player, final String font, final String biome) {
         if (!FONTS.contains(font) || !(biome.equals("forest") || biome.equals("desert"))) {
-            player.sendSystemMessage(Component.literal("Use nether/aether/bumblezone/ratlantis and forest/desert."));
+            player.sendSystemMessage(Component.literal("Use nether/aether/bumblezone and forest/desert."));
             return 0;
         }
         ServerLevel level = player.serverLevel();

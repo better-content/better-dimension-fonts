@@ -12,7 +12,7 @@ import kotlin.io.path.writeText
 internal object FontDefinitionMigrations {
     private const val LEGACY_PASSIVE_CHARGE_PER_TICK = 0.25
     private const val MIGRATION_MARKER = ".passive-charge-10-minute-defaults-v1"
-    private val builtInFonts = setOf("overworld", "nether", "end", "aether", "bumblezone", "ratlantis")
+    private val builtInFonts = setOf("overworld", "nether", "end", "aether", "bumblezone")
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
     fun migrateLegacyPassiveChargeDefaults(configRoot: Path) {

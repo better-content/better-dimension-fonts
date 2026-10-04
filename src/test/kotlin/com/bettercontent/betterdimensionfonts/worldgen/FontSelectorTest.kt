@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FontSelectorTest {
-    private val equalDefinitions = listOf("aether", "bumblezone", "nether", "ratlantis").map { id ->
+    private val equalDefinitions = listOf("aether", "bumblezone", "nether").map { id ->
         ObeliskDefinition(id = id, displayName = id, worldgenWeight = 1.0)
     }
 
@@ -68,10 +68,10 @@ class FontSelectorTest {
         }
 
         candidateCounts.values.forEach { count ->
-            assertTrue(abs(count.toDouble() / sampleCount - 0.25) <= 0.005, "candidate counts=$candidateCounts")
+            assertTrue(abs(count.toDouble() / sampleCount - 1.0 / 3.0) <= 0.005, "candidate counts=$candidateCounts")
         }
         acceptedCounts.values.forEach { count ->
-            assertTrue(abs(count.toDouble() / acceptedTotal - 0.25) <= 0.015, "accepted counts=$acceptedCounts")
+            assertTrue(abs(count.toDouble() / acceptedTotal - 1.0 / 3.0) <= 0.015, "accepted counts=$acceptedCounts")
         }
     }
 

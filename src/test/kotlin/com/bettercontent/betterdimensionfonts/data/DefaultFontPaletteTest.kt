@@ -11,7 +11,6 @@ class DefaultFontPaletteTest {
         val resourceNames = listOf(
             "overworld.json",
             "bumblezone.json",
-            "ratlantis.json",
             "nether.json"
         )
         resourceNames.forEach { name ->
@@ -36,7 +35,7 @@ class DefaultFontPaletteTest {
 
     @Test
     fun bundledFontsRefillFromEmptyInTenMinutesAndOldBuiltInDefaultsMigrate() {
-        val resourceNames = listOf("overworld", "nether", "end", "aether", "bumblezone", "ratlantis")
+        val resourceNames = listOf("overworld", "nether", "end", "aether", "bumblezone")
         resourceNames.forEach { id ->
             val stream = javaClass.classLoader.getResourceAsStream("defaults/fonts/$id.json")
                 ?: error("Missing bundled default font resource $id")

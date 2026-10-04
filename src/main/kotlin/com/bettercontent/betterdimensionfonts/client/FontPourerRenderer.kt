@@ -24,7 +24,6 @@ class FontPourerRenderer(@Suppress("UNUSED_PARAMETER") context: BlockEntityRende
             "nether" -> intArrayOf(230, 95, 45)
             "aether" -> intArrayOf(120, 225, 245)
             "bumblezone" -> intArrayOf(245, 188, 52)
-            "ratlantis" -> intArrayOf(130, 215, 160)
             else -> intArrayOf(180, 220, 225)
         }
         val sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS)

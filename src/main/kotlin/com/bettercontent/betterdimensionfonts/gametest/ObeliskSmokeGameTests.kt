@@ -13,11 +13,6 @@ class ObeliskSmokeGameTests {
     }
 
     @GameTest(templateNamespace = "better_dimension_fonts", template = "bootstrap/empty", batch = "font_smoke_font_only", timeoutTicks = 1600)
-    fun ratlantis_font_authorizes_player_round_trip(helper: GameTestHelper) {
-        ObeliskGameTestSupport.smokeHeadlessFontOnlyRoundTrip(helper, "ratlantis")
-    }
-
-    @GameTest(templateNamespace = "better_dimension_fonts", template = "bootstrap/empty", batch = "font_smoke_font_only", timeoutTicks = 1600)
     fun bumblezone_font_authorizes_player_round_trip(helper: GameTestHelper) {
         ObeliskGameTestSupport.smokeHeadlessFontOnlyRoundTrip(helper, "bumblezone")
     }

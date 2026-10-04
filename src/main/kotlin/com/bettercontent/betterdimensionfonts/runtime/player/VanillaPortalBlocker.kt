@@ -18,8 +18,7 @@ import kotlin.math.floor
 object VanillaPortalBlocker {
 
     private val fontOnlyDimensions = setOf(
-        ResourceLocation("the_bumblezone", "the_bumblezone"),
-        ResourceLocation("rats", "ratlantis")
+        ResourceLocation("the_bumblezone", "the_bumblezone")
     )
 
     @SubscribeEvent

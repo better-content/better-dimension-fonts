@@ -190,7 +190,6 @@ private fun canonicalLevelKey(templateId: String): ResourceKey<Level>? {
         "nether" -> ResourceLocation("minecraft", "the_nether")
         "end" -> ResourceLocation("minecraft", "the_end")
         "bumblezone" -> ResourceLocation("the_bumblezone", "the_bumblezone")
-        "ratlantis" -> ResourceLocation("rats", "ratlantis")
         else -> runCatching { ResourceLocation(templateId) }.getOrNull()
     } ?: return null
     return ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, location)
@@ -1075,8 +1074,8 @@ object ObeliskGameTestSupport {
 
     fun worldgenDefinitionsProduceFontAltarSites(helper: GameTestHelper) {
         deleteTestConfigs()
-        val moddedTemplateId = "ratlantis"
-        val moddedTargetDimension = "rats:ratlantis"
+        val moddedTemplateId = "custom_island"
+        val moddedTargetDimension = "example:custom_island"
         val endDefinition = ObeliskDefinition(
             id = "test_end_visual_definition",
             displayName = "Test End Visual",
@@ -1186,8 +1185,8 @@ object ObeliskGameTestSupport {
         val definition = ObeliskDefinition(
             id = "test_structure_piece_visual_definition",
             displayName = "Structure Piece Visual",
-            instanceTemplateId = "ratlantis",
-            targetDimension = "rats:ratlantis",
+            instanceTemplateId = "custom_island",
+            targetDimension = "example:custom_island",
             rewardTableId = "default",
             cultivationPalette = CultivationPaletteDefinition(trophyBlocks = listOf("minecraft:white_candle"))
         )

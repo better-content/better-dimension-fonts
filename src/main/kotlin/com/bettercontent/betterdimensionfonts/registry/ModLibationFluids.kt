@@ -20,7 +20,7 @@ import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
 import java.util.function.Consumer
 
-/** Four renewable, destination-specific Create mixing fluids for the overhead Font Pourer. */
+/** Three renewable, destination-specific Create mixing fluids for the overhead Font Pourer. */
 object ModLibationFluids {
     private val types = DeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, MOD_ID)
     private val fluids = DeferredRegister.create(ForgeRegistries.FLUIDS, MOD_ID)
@@ -34,7 +34,6 @@ object ModLibationFluids {
         registerFluid("nether_libation", 0xffab3c20.toInt())
         registerFluid("aether_libation", 0xff78ddec.toInt())
         registerFluid("bumblezone_libation", 0xffe8ad24.toInt())
-        registerFluid("ratlantis_libation", 0xff79b58c.toInt())
     }
 
     fun register(bus: IEventBus) {

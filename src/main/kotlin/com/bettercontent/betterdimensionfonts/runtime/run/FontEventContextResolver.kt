@@ -17,7 +17,6 @@ internal object FontEventContextResolver {
         ResourceLocation("minecraft", "the_nether") to ResourceLocation("minecraft", "netherrack"),
         ResourceLocation("aether", "the_aether") to ResourceLocation("aether", "holystone"),
         ResourceLocation("the_bumblezone", "the_bumblezone") to ResourceLocation("the_bumblezone", "pollen_puff"),
-        ResourceLocation("rats", "ratlantis") to ResourceLocation("rats", "marbled_cheese_raw"),
         ResourceLocation("minecraft", "the_end") to ResourceLocation("minecraft", "end_stone"),
         ResourceLocation("minecraft", "overworld") to ResourceLocation("minecraft", "stone")
     )

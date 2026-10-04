@@ -52,7 +52,7 @@ class FontLocationSavedDataTest {
 
         val selected = FontLocationSavedData.onePerDefinition(
             candidates,
-            setOf("aether", "nether", "ratlantis"),
+            setOf("aether", "nether", "bumblezone"),
             Candidate::id,
             compareBy(Candidate::order)
         )
