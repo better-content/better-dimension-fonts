@@ -16,7 +16,7 @@
     "cultivationBlocks": ["minecraft:oxidized_copper"],
     "structureBlocks": ["the_bumblezone:ancient_wax_bricks", "the_bumblezone:ancient_wax_compound_eyes", "the_bumblezone:porous_honeycomb_block"],
     "trophyBlocks": ["the_bumblezone:beehive_beeswax", "the_bumblezone:honeycomb_brood_block", "the_bumblezone:ancient_wax_diamond"],
-    "decorations": ["the_bumblezone:beehive_beeswax", "the_bumblezone:empty_honeycomb_brood_block", "the_bumblezone:ancient_wax_compound_eyes", "minecraft:yellow_candle"]
+    "decorations": ["minecraft:dandelion", "minecraft:poppy", "minecraft:blue_orchid", "minecraft:allium", "minecraft:azure_bluet", "minecraft:oxeye_daisy", "minecraft:cornflower", "complicated_bees:bee_nest"]
   },
   "rewardTableId": "no_bonus",
   "maxCharge": 15000,

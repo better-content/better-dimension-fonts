@@ -20,6 +20,7 @@ import net.minecraft.world.level.WorldGenLevel
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.BushBlock
+import net.minecraft.world.level.block.FlowerBlock
 import net.minecraft.world.level.block.LeavesBlock
 import net.minecraft.world.level.block.SlabBlock
 import net.minecraft.world.level.block.state.BlockState
@@ -2936,7 +2937,8 @@ class ObeliskFeature(codec: Codec<NoneFeatureConfiguration>) : Feature<NoneFeatu
             blocksOrEmpty(ids).filter(::isDisplayDetailBlock)
 
         private fun isDisplayDetailBlock(block: Block): Boolean {
-            val path = BuiltInRegistries.BLOCK.getKey(block).path
+            val key = BuiltInRegistries.BLOCK.getKey(block)
+            val path = key.path
             if (path == "dragon_head" || path == "dragon_wall_head") return false
             if (path == "dead_bush" || path == "potted_dead_bush") return false
             if (path.endsWith("_skull") || path.endsWith("_head")) return false
@@ -2945,7 +2947,9 @@ class ObeliskFeature(codec: Codec<NoneFeatureConfiguration>) : Feature<NoneFeatu
             if (path.endsWith("_slab") || path.endsWith("_stairs") || path.endsWith("_pillar")) return false
             if (path.endsWith("_bricks") || path.endsWith("_tiles") || path.endsWith("_planks")) return false
             if (path.endsWith("_block") || path.endsWith("_ore")) return false
-            return path == "copper_bars" ||
+            return block is FlowerBlock ||
+                (key.namespace == "complicated_bees" && path == "bee_nest") ||
+                path == "copper_bars" ||
                 path == "copper_scaffolding" ||
                 path == "copper_chain" ||
                 path == "copper_rail" ||
