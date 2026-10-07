@@ -109,6 +109,10 @@ object ObeliskDataManager {
             logger.warn("Ignoring font definition with missing id")
             return null
         }
+        if (RetiredFontDefinitions.isRetired(id, definition.targetDimension, definition.instanceTemplateId)) {
+            logger.info("Skipping retired font definition {} (Ratlantis access has been removed)", id)
+            return null
+        }
         val requiredNamespace = stringOrNull(definition.requiredNamespace)
         if (requiredNamespace != null && !namespaceAvailable(requiredNamespace)) {
             logger.info("Skipping font definition {} because required namespace {} is unavailable", id, requiredNamespace)

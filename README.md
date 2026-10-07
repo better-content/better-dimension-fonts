@@ -29,7 +29,7 @@ prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 
 ## Font generation and discovery
 
-Better Dimension Fonts bundles the Aether, Bumblezone, Nether, and Ratlantis Font definitions at equal default `worldgenWeight`. A weight controls deterministic selection at an eligible structure start; it does not guarantee equal visible counts in a finite explored area. Terrain rejection, exploration history, destroyed Fonts, and map sales are measured separately from configured probability.
+Better Dimension Fonts bundles the Aether, Bumblezone, and Nether expedition Font definitions at equal default `worldgenWeight`. A weight controls deterministic selection at an eligible structure start; it does not guarantee equal visible counts in a finite explored area. Terrain rejection, exploration history, destroyed Fonts, and map sales are measured separately from configured probability.
 
 Layout and definition selection use independent deterministic seed domains, so terrain opportunity cannot systematically favor a Font type. Custom JSON definitions remain supported when their weights are positive and finite. The effective normalized weights are logged on reload and available with the permission-level-2 `/font audit` command.
 
@@ -37,13 +37,13 @@ Use the permission-level-2 `/font find` command to list one indexed natural Font
 
 Naturally generated Fonts are added to a saved discovery index as their chunks load. Wandering-trader Font maps use only that index and never locate or generate remote structure chunks; maps are marker-only until players explore their terrain. Harvesting a bound Font drops an unbound Font: it can be replanted as a World Condenser base but cannot start another expedition. Harvesting during an active run is blocked.
 
-New Overworld Font sites use a circular oxidized-copper court without water pools, candles, and biome-matched stripped-log supports only where trees grow. Bumblezone sites include dense wax and hive clusters. Ratlantis sites use varied marbled-cheese masonry and small decorations instead of Automaton Heads. Font maps display their destination's salience aspects; themed spirit sellers offer only matching surveyed destinations. Underwater return Fonts preserve the water and use four soul-sand corners as bubble shafts to the surface.
+New Overworld Font sites use a circular oxidized-copper court without water pools, candles, and biome-matched stripped-log supports only where trees grow. Bumblezone sites include dense wax and hive clusters. Font maps display their destination's salience aspects; themed spirit sellers offer only matching surveyed destinations. Underwater return Fonts preserve the water and use four soul-sand corners as bubble shafts to the surface.
 
 Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. The shrine joins their house pools with a street-facing entrance. Its selection rate targets roughly one shrine in five newly generated villages when a village makes twelve house placement attempts; actual rates vary with village layout and available space.
 
-The craftable Font Pourer sits two blocks above a Font, leaving one air block for a visible pour. It accepts the matching Nether, Aether, Bumblezone, or Ratlantis Libation by bucket or fluid automation and restores charge only while a run is active. One bucket supplies 48,000 charge, about ten extra minutes at the current 80 charge per second drain; a nominal 15,000-charge Font lasts roughly three minutes before entry costs. The Font itself has no fluid capability.
+The craftable Font Pourer sits two blocks above a Font, leaving one air block for a visible pour. It accepts the matching Nether, Aether, or Bumblezone Libation by bucket or fluid automation and restores charge only while a run is active. One bucket supplies 48,000 charge, about ten extra minutes at the current 80 charge per second drain; a nominal 15,000-charge Font lasts roughly three minutes before entry costs. The Font itself has no fluid capability.
 
-These contracts are new-world-only. Existing copied configuration, historical structures, and saves are not migrated or scanned; remove old Font configuration and create a new world when validating the new distribution.
+Site-layout changes are new-world-only. Historical structures and saves are not migrated or scanned. Ratlantis is retired: the loader ignores retained definitions with the `ratlantis` ID or a `ratlantis` / `rats:ratlantis` destination (including legacy template IDs), even while Rats remains installed. Their files are preserved, but they cannot generate new sites or map offers. Already-generated Ratlantis structures are not removed from saved worlds.
 
 `FontAggregateReturnEvent` posts once for every living participant actually transported back to
 the origin, including a voluntary return, charge-expiry extraction, and a Font-bound Aether
