@@ -11,11 +11,17 @@ Pack-owned obelisk and charge-font worldgen/runtime mod for Forge `1.20.1`.
 ```
 
 `verifyFast` runs the JVM verification lane. `verifyFull` adds **all production
-GameTests** (48 at this revision). `verifySmoke` adds only the 11 lifecycle smoke
+GameTests** (50 at this revision). `verifySmoke` adds only the 11 lifecycle smoke
 tests. `./gradlew headlessGameTest -PdimensionDrinkGameTestSelection=runtime` selects a focused
 profile; supported selectors are `all`, `smoke`, `run`, `activation`, `rewards`,
 `void`, `data`, `template`, `multiplayer`, `commands`, and `runtime`. Unknown selectors
 and overrides conflicting with `verifyFull` or `verifySmoke` fail.
+
+If an incremental Java compilation leaves the Mixin annotation processor's
+`compileJava-mappings.tsrg` absent, regenerate it through its real producer before
+staging: `./gradlew compileJava --rerun verifyFull stageRuntimeJar --no-daemon --offline`.
+The task-specific `--rerun` forces the annotated Java sources to compile; it does not
+fabricate mappings or bypass verification.
 
 Each GameTest invocation retains its generated world, logs, and `execution.json` under
 `build/gametest/<run-id>/`. The gate compares actual runtime registration and
@@ -38,6 +44,8 @@ Use the permission-level-2 `/font find` command to list one indexed natural Font
 Naturally generated Fonts are added to a saved discovery index as their chunks load. Wandering-trader Font maps use only that index and never locate or generate remote structure chunks; maps are marker-only until players explore their terrain. Harvesting a bound Font drops an unbound Font: it can be replanted as a World Condenser base but cannot start another expedition. Harvesting during an active run is blocked.
 
 New Overworld Font sites use a circular oxidized-copper court without water pools, candles, and biome-matched stripped-log supports only where trees grow. Bumblezone sites include dense wax and hive clusters. Font maps display their destination's salience aspects; themed spirit sellers offer only matching surveyed destinations. Underwater return Fonts preserve the water and use four soul-sand corners as bubble shafts to the surface.
+
+New Aether arrival sites must retain at least 1,024 existing `aether`-namespace blocks in the nine chunks centered on the landing chunk after the return court's projected floor, support-column, clearance, and return-Font writes. Sparse candidates are skipped within the existing configured search radius, before any court is placed. If none qualifies, entry is rejected without spending the opening entry charge or binding the player; no emergency Aether island is built and unarrived-site rollback does not clear natural mobs. Preparation/activation/rollback still use the normal site lifecycle. Saved arrival positions are reused unchanged, and other dimensions keep their existing arrival behavior.
 
 Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. The shrine joins their house pools with a street-facing entrance. Its selection rate targets roughly one shrine in five newly generated villages when a village makes twelve house placement attempts; actual rates vary with village layout and available space.
 

@@ -123,6 +123,7 @@ object CanonicalDimensionBackend : RunWorldBackend {
         val level = player.server.getLevel(record.backendLevelKey)
             ?: return EnterRunResult.Rejected("target dimension ${record.backendLevelKey.location()} is not loaded")
         val spawn = resolveArrival(level, record, configFor(record.templateId))
+            ?: return EnterRunResult.Rejected("no safe first Aether arrival retains sufficient native terrain")
         val landing = normalizedArrivalTeleportPos(level, spawn)
         record.updatedGameTime = gameTime(player.server)
         FontTravelAuthorization.authorize(player, level.dimension()) {
@@ -161,8 +162,11 @@ object CanonicalDimensionBackend : RunWorldBackend {
 
     override fun destroyRun(server: MinecraftServer, handle: ActiveSiteHandle, reason: String) {
         val record = site(server, handle.siteId) ?: return
-        server.getLevel(record.backendLevelKey)?.let { level ->
-            despawnRunMobs(level, record)
+        if (!AetherArrivalTerrainPolicy.requiresFirstArrivalCensus(
+                record.backendLevelKey.location().toString(), record.spawnPos != null)) {
+            server.getLevel(record.backendLevelKey)?.let { level ->
+                despawnRunMobs(level, record)
+            }
         }
         playerBindings.entries.removeIf { (_, siteId) -> siteId == record.siteId }
         record.state = SiteState.PREPARED
@@ -214,13 +218,18 @@ object CanonicalDimensionBackend : RunWorldBackend {
         }
     }
 
-    private fun resolveArrival(level: ServerLevel, record: RunSiteRecord, config: BackendConfig): BlockPos {
+    private fun resolveArrival(level: ServerLevel, record: RunSiteRecord, config: BackendConfig): BlockPos? {
         val resolvedFloor = if (record.spawnPos != null) {
             record.spawnPos!!.below(2)
         } else {
             val desired = record.siteCenter
-            findSafeFloor(level, desired.x, desired.z, config.spawnSearchRadius)
-                ?: BlockPos(desired.x, emergencySpawnY(level) - 1, desired.z)
+            if (AetherArrivalTerrainPolicy.requiresFirstArrivalCensus(
+                    record.backendLevelKey.location().toString(), false)) {
+                findAetherFloor(level, desired.x, desired.z, config.spawnSearchRadius) ?: return null
+            } else {
+                findSafeFloor(level, desired.x, desired.z, config.spawnSearchRadius)
+                    ?: BlockPos(desired.x, emergencySpawnY(level) - 1, desired.z)
+            }
         }
         ensureArrivalAnchor(level, resolvedFloor)
         val spawn = resolvedFloor.above(2).immutable()
@@ -295,7 +304,67 @@ object CanonicalDimensionBackend : RunWorldBackend {
         return null
     }
 
-    internal fun findSafeFloor(level: ServerLevel, x: Int, z: Int): BlockPos? {
+    /** Search-local census only; no contents cache or changes to generation/anchor geometry. */
+    private fun findAetherFloor(level: ServerLevel, x: Int, z: Int, searchRadius: Int): BlockPos? {
+        val census = mutableMapOf<AetherArrivalTerrainPolicy.Chunk, Long?>()
+        val radius = searchRadius.coerceAtLeast(0)
+        for (dx in -radius..radius) {
+            for (dz in -radius..radius) {
+                val columnX = AetherArrivalTerrainPolicy.offsetColumn(x, dx) ?: continue
+                val columnZ = AetherArrivalTerrainPolicy.offsetColumn(z, dz) ?: continue
+                val chunks = AetherArrivalTerrainPolicy.centeredChunks(columnX, columnZ)
+                val counts = chunks.map { key ->
+                    if (census.containsKey(key)) census[key]
+                    else countNativeAether(level, key).also { census[key] = it }
+                }
+                // Even zero anchor loss cannot admit this chunk footprint. Avoid scanning its columns.
+                if (!AetherArrivalTerrainPolicy.qualifies(counts, 0)) continue
+                val floor = findSafeFloor(level, columnX, columnZ) { candidate ->
+                    val loss = overwrittenNativeAether(level, candidate)
+                    if (!AetherArrivalTerrainPolicy.qualifies(counts, loss)) false
+                    else {
+                        // Neighbor generation during the bounded search can alter a memoized chunk.
+                        // Recount the exact nine before acceptance, still BEFORE any anchor write.
+                        val fresh = chunks.map { key -> countNativeAether(level, key).also { census[key] = it } }
+                        val freshLoss = overwrittenNativeAether(level, candidate)
+                        AetherArrivalTerrainPolicy.qualifies(fresh, freshLoss)
+                    }
+                }
+                if (floor != null) return floor
+            }
+        }
+        return null
+    }
+
+    private fun countNativeAether(level: ServerLevel, key: AetherArrivalTerrainPolicy.Chunk): Long? {
+        val chunk = level.getChunk(key.x, key.z)
+        var count: Long? = 0L
+        for (section in chunk.sections) {
+            section.states.count { state, amount ->
+                count = AetherArrivalTerrainPolicy.addPaletteCount(
+                    count, BuiltInRegistries.BLOCK.getKey(state.block).namespace, amount.toLong())
+            }
+        }
+        return count
+    }
+
+    /** Exact distinct cells written by ensureArrivalAnchor; no place/undo trial anchors. */
+    private fun overwrittenNativeAether(level: ServerLevel, floor: BlockPos): Long {
+        val submerged = level.getFluidState(floor.above()).`is`(net.minecraft.tags.FluidTags.WATER)
+        val overwritten = AetherArrivalTerrainPolicy.overwrittenCells(
+            AetherArrivalTerrainPolicy.Cell(floor.x, floor.y, floor.z),
+            ArrivalSiteLayout.floorOffsets().map { AetherArrivalTerrainPolicy.Cell(it.x, it.y, it.z) },
+            ArrivalSiteLayout.CLEARANCE_HEIGHT, level.minBuildHeight, submerged,
+        ) { cell -> level.getBlockState(BlockPos(cell.x, cell.y, cell.z)).isSolid }
+        return overwritten.count { cell ->
+            BuiltInRegistries.BLOCK.getKey(level.getBlockState(BlockPos(cell.x, cell.y, cell.z)).block).namespace == "aether"
+        }.toLong()
+    }
+
+    internal fun findSafeFloor(level: ServerLevel, x: Int, z: Int): BlockPos? =
+        findSafeFloor(level, x, z) { true }
+
+    private fun findSafeFloor(level: ServerLevel, x: Int, z: Int, accepts: (BlockPos) -> Boolean): BlockPos? {
         level.getChunk(BlockPos(x, level.minBuildHeight, z))
         val highestFeetY = level.maxBuildHeight - SPAWN_CLEARANCE - 1
         for (y in highestFeetY downTo level.minBuildHeight + 1) {
@@ -313,13 +382,13 @@ object CanonicalDimensionBackend : RunWorldBackend {
                 level.getFluidState(feet).isEmpty &&
                 level.getFluidState(head).isEmpty
             ) {
-                return floor
+                if (accepts(floor)) return floor
             }
             if (floorState.isSolid && !floorState.`is`(Blocks.BEDROCK) &&
                 floorFluid.isEmpty && level.getFluidState(feet).`is`(net.minecraft.tags.FluidTags.WATER) &&
                 level.getFluidState(head).`is`(net.minecraft.tags.FluidTags.WATER) &&
                 bubbleShaftsReachSurface(level, floor)) {
-                return floor
+                if (accepts(floor)) return floor
             }
         }
         return null
