@@ -1360,6 +1360,10 @@ object ObeliskGameTestSupport {
             generatedState.`is`(ModBlocks.OBELISK.get()),
             "Expected the generated literal font to use the registered dimensional font block"
         )
+        helper.assertTrue(
+            !Blocks.SNOW.defaultBlockState().canSurvive(helper.level, expectedFontPos.above()),
+            "Expected a generated dimensional font to reject native snow support and preserve its clear interaction space"
+        )
         val generatedFont = helper.level.getBlockEntity(expectedFontPos) as? ObeliskBlockEntity
         helper.assertTrue(generatedFont != null, "Expected the literal generated font to create its block entity")
         helper.assertTrue(
