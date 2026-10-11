@@ -1,5 +1,11 @@
 # Better Dimension Fonts
 
+## Scope and authority
+
+This repository owns its mod-specific behavior and authoring inputs. Read [local instructions](AGENTS.md)
+and the [shared documentation/policy index](../../better-content-modpack/docs/README.md).
+
+
 Pack-owned obelisk and charge-font worldgen/runtime mod for Forge `1.20.1`.
 
 ## Common commands
@@ -23,12 +29,13 @@ staging: `./gradlew compileJava --rerun verifyFull stageRuntimeJar --no-daemon -
 The task-specific `--rerun` forces the annotated Java sources to compile; it does not
 fabricate mappings or bypass verification.
 
-Each GameTest invocation retains its generated world, logs, and `execution.json` under
+During the active task, each GameTest invocation keeps its generated world, logs, and `execution.json` under
 `build/gametest/<run-id>/`. The gate compares actual runtime registration and
 successful completion against the reviewed IDs in `gametest/profiles/`, rejects
 missing or incomplete evidence, and records the selected profile and run ID.
-Inspect failed evidence before manually removing its fixture. A later run uses a
-new fixture; it does not delete a previous failed world. Runtime charge scenarios
+Inspect failed evidence during diagnosis. A later run uses a new fixture; at task handoff
+all previous worlds/reports and idle caches/build outputs are disposed of under the shared
+[disposal policy](../../better-content-modpack/docs/policies/generated-data.md). Runtime charge scenarios
 use deterministic modifier fixtures and separate batches; worldgen scenarios
 prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 12 negative execution-evidence checks without starting Forge.
