@@ -74,7 +74,7 @@ def validate_inputs(client=False):
         check_hash(jar.read('net/minecraftforge/fml/loading/moddiscovery/ModFileParser.class'), 'bdfe1926139ccdb5cf69570a5985e560d925dd3f5c99d552f4e5adac674888a4')
     with zipfile.ZipFile(provider('better-compat-fixes', 'better-compat-fixes-0.1.9.jar')) as jar:
         descriptor = jar.read('better_compat_fixes.mixins.json')
-        check_hash(descriptor, '0fb334f27fd59f2260d71b66b725e2ae6b1c6b0d444f59dcc2772565fc1e85aa')
+        check_hash(descriptor, '10522fd6f164595925c65d777e7507b0c7c19727ac1dcbf2196086c87dbc6e7f')
         config = json.loads(descriptor)
         if config['required'] is not False:
             raise ValueError('Optional native mixins became required')
