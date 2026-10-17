@@ -20,6 +20,7 @@ object ObeliskGameTestRegistrar {
             "multiplayer" -> event.register(ObeliskMultiplayerGameTests::class.java)
             "commands" -> event.register(ObeliskCommandGameTests::class.java)
             "runtime" -> event.register(ObeliskRuntimeGameTests::class.java)
+            "celestial" -> event.register(ObeliskCelestialGameTests::class.java)
             "all" -> {
                 event.register(ObeliskSmokeGameTests::class.java)
                 event.register(ObeliskRunLifecycleGameTests::class.java)

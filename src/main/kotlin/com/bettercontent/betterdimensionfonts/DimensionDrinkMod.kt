@@ -39,7 +39,10 @@ class DimensionDrinkMod {
     }
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
-        event.enqueueWork(FontChunkTicketManager::registerValidationCallback)
+        event.enqueueWork {
+            FontChunkTicketManager.registerValidationCallback()
+            com.bettercontent.betterdimensionfonts.runtime.CelestialIntegration.register()
+        }
     }
 
     companion object {

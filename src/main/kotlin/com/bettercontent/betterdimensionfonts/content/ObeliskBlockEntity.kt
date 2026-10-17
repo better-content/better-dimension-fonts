@@ -5,6 +5,7 @@ import com.bettercontent.betterdimensionfonts.data.ObeliskDataManager
 import com.bettercontent.betterdimensionfonts.registry.ModBlockEntities
 import com.bettercontent.betterdimensionfonts.registry.ModBlocks
 import com.bettercontent.betterdimensionfonts.runtime.ObeliskRuntimeService
+import com.bettercontent.betterdimensionfonts.runtime.CelestialIntegration
 import com.bettercontent.betterdimensionfonts.trade.FontLocationSavedData
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -188,12 +189,14 @@ class ObeliskBlockEntity(
         ObeliskDataManager.getObelisk(definitionId)?.maxCharge ?: ObeliskConstants.MAX_CHARGE_STORAGE
 
     fun getStartChargeCost(): Double {
+        if (isOpenWaysAvailable()) return 0.0
         var cost = ObeliskDataManager.getObelisk(definitionId)?.startChargeCost ?: ObeliskConstants.START_CHARGE_COST
         modifiers.filter { it.stat == ChargeStat.ENTRY_EFFICIENCY }.forEach { cost = it.reduce(cost) }
         return cost.coerceAtLeast(0.0)
     }
 
     fun getJoinChargeCost(): Double {
+        if (isOpenWaysAvailable()) return 0.0
         var cost = ObeliskDataManager.getObelisk(definitionId)?.joinChargeCost ?: ObeliskConstants.JOIN_CHARGE_COST
         modifiers.filter { it.stat == ChargeStat.ENTRY_EFFICIENCY }.forEach { cost = it.reduce(cost) }
         return cost.coerceAtLeast(0.0)
@@ -350,12 +353,14 @@ class ObeliskBlockEntity(
     fun isCharging(): Boolean = !isRunActive() && chargeStoredInternal < getModifiedMaxStorage()
 
     fun getModifiedBaseDrain(): Double {
+        if (isOpenWaysAvailable()) return 0.0
         var drain = getRunBaseChargePerSecond()
         modifiers.filter { it.stat == ChargeStat.BASE_DRAIN_EFFICIENCY }.forEach { drain = it.reduce(drain) }
         return drain.coerceAtLeast(0.0)
     }
 
     fun getModifiedPlayerDrain(): Double {
+        if (isOpenWaysAvailable()) return 0.0
         var drain = getRunPlayerChargePerSecond()
         modifiers.filter { it.stat == ChargeStat.PLAYER_DRAIN_EFFICIENCY }.forEach { drain = it.reduce(drain) }
         return drain.coerceAtLeast(0.0)
@@ -490,15 +495,30 @@ class ObeliskBlockEntity(
 
     fun getInternalItemHandler(): ItemStackHandler = itemHandler
 
-    fun shouldShowBeam(): Boolean = beamVisible && (isRunActive() || chargeStoredInternal >= getModifiedMaxStorage())
+    fun shouldShowBeam(): Boolean = beamVisible && (isOpenWaysAvailable() || isRunActive() || chargeStoredInternal >= getModifiedMaxStorage())
 
     fun isReadyToOpen(): Boolean = !isRunActive() && chargeStored >= getStartChargeCost()
 
-    fun isLowChargeWarning(): Boolean = isRunActive() && getChargePercent() <= ObeliskConstants.BOSS_BAR_YELLOW_THRESHOLD
+    fun isOpenWaysAvailable(): Boolean = blockState.`is`(ModBlocks.OBELISK.get()) &&
+        blockState.getValue(ObeliskBlock.BOUND) && ObeliskDataManager.getObelisk(definitionId)?.enabled == true &&
+        CelestialIntegration.isOpenWays(level)
+
+    fun isLowChargeWarning(): Boolean = !isOpenWaysAvailable() && isRunActive() && getChargePercent() <= ObeliskConstants.BOSS_BAR_YELLOW_THRESHOLD
 
     fun clientAmbientTick(tickLevel: Level, tickPos: BlockPos) {
         if (!tickLevel.isClientSide) return
         val gameTime = tickLevel.gameTime
+        if (isOpenWaysAvailable()) {
+            val viewer = tickLevel.getNearestPlayer(tickPos.x + 0.5, tickPos.y + 0.5, tickPos.z + 0.5, 32.0, false)
+            if (viewer != null) {
+                com.bettercontent.betterdimensionfonts.client.OpenWaysParticles.frame(gameTime).forEach { mote ->
+                    val color = if (mote.gold) Vector3f(0.95f, 0.72f, 0.25f) else Vector3f(0.34f, 0.76f, 0.58f)
+                    tickLevel.addParticle(DustParticleOptions(color, 0.8f),
+                        tickPos.x + 0.5 + mote.x, tickPos.y + mote.y, tickPos.z + 0.5 + mote.z,
+                        mote.vx, mote.vy, mote.vz)
+                }
+            }
+        }
         if (isReadyToOpen() && gameTime >= nextReadyAmbientGameTime) {
             nextReadyAmbientGameTime = gameTime + 75L + tickLevel.random.nextInt(55)
             tickLevel.playLocalSound(

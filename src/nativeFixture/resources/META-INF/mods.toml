@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="better_dimension_fonts_native_fixture"
+version="1.0"
+displayName="Non-shipping Font Native Fixture"
+description='''Current-invocation native config and diagnostic inputs; never packaged.'''
+[[dependencies.better_dimension_fonts_native_fixture]]
+modId="better_dimension_fonts"
+mandatory=true
+versionRange="[1,)"
+ordering="AFTER"
+side="BOTH"

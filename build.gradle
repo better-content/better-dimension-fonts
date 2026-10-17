@@ -4,6 +4,25 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.38' apply false
 }
 
+// Mirrors ForgeGradle 6.0.54 MinecraftRunTask.exec preparation, but never launches Java.
+// The protected native token helpers keep classpath/module arguments authoritative.
+abstract class CelestialLaunchExport extends net.minecraftforge.gradle.common.util.runs.RunConfigGenerator {
+    static Map capture(Project project, def run) {
+        def config = run.runConfig.get()
+        def tokens = configureTokensLazy(project, config, mapModClassesToGradle(project, config),
+            run.minecraftArtifacts, run.runtimeClasspathArtifacts)
+        def vm = config.jvmArgs.collect { config.replace(tokens, it) }
+        if (config.client) vm.addAll(run.additionalClientArgs.get().collect { config.replace(tokens, it) })
+        vm.addAll(config.properties.collect { key, value -> "-D${key}=${config.replace(tokens, value)}".toString() })
+        def cp = project.files(config.allSources.collect { it.runtimeClasspath }).asPath
+        def args = getArgsStream(config, tokens, false).toList()
+        if (!config.main || !cp) throw new GradleException('Incomplete native visual launch configuration')
+        [command: [run.javaLauncher.get().executablePath.asFile.absolutePath] + vm + ['-cp', cp, config.main] + args,
+         directory: config.workingDirectory,
+         environment: config.environment.collectEntries { key, value -> [(key): config.replace(tokens, value)] }]
+    }
+}
+
 ext {
     modId = 'better_dimension_fonts'
     modName = 'Better Dimension Fonts'
@@ -33,6 +52,20 @@ def betterContentJar = { String repository, String artifact ->
 }
 
 repositories {
+    ivy {
+        name = 'betterGameplayNoticesLocal'
+        url = uri(betterContentJar('better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar').parentFile)
+        patternLayout { artifact('[artifact]-[revision].[ext]') }
+        metadataSources { artifact() }
+        content { includeGroup('bettercontent.notices.local') }
+    }
+    ivy {
+        name = 'betterCelestialEventsLocal'
+        url = uri(betterContentJar('better-celestial-events', 'better-celestial-events-0.1.0.jar').parentFile)
+        patternLayout { artifact('[artifact]-[revision].[ext]') }
+        metadataSources { artifact() }
+        content { includeGroup('bettercontent.celestial.local') }
+    }
     maven { url = 'https://maven.llamalad7.mixinextras.org/releases/' }
     ivy {
         name = 'betterContentFixesLocal'
@@ -46,7 +79,7 @@ repositories {
 def dimensionDrinkGameTestNamespaces = (findProperty('dimensionDrinkGameTestNamespaces') ?: modId).toString()
 def explicitGameTestSelection = findProperty('dimensionDrinkGameTestSelection')?.toString()?.toLowerCase(Locale.ROOT)
 ext.dimensionDrinkGameTestSelection = explicitGameTestSelection ?: 'all'
-def supportedSelections = ['all', 'smoke', 'run', 'activation', 'rewards', 'void', 'data', 'template', 'multiplayer', 'commands', 'runtime']
+def supportedSelections = ['all', 'smoke', 'run', 'activation', 'rewards', 'void', 'data', 'template', 'multiplayer', 'commands', 'runtime', 'celestial']
 if (!supportedSelections.contains(dimensionDrinkGameTestSelection)) {
     throw new GradleException("Unknown Better Dimension Fonts GameTest selection: ${dimensionDrinkGameTestSelection}")
 }
@@ -61,13 +94,17 @@ dependencies {
     def mantleDep = 'curse.maven:mantle-74924:7563777'
     def tconstructDep = 'curse.maven:tinkers-construct-74072:7449219'
 
+    compileOnly fg.deobf('bettercontent.celestial.local:better-celestial-events:0.1.0')
+    if ((findProperty('dimensionDrinkIncludeCelestialRuntime') ?: 'false').toString().toBoolean()) {
+        runtimeOnly fg.deobf('bettercontent.celestial.local:better-celestial-events:0.1.0')
+    }
     compileOnly fg.deobf(mantleDep)
     compileOnly fg.deobf(tconstructDep)
     compileOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
     // Forge dev runs load declared mandatory dependencies from runtimeOnly; testRuntimeOnly
     // alone is not part of the GameTestServer launch classpath.
     runtimeOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
-    runtimeOnly files(betterContentJar('better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar'))
+    runtimeOnly fg.deobf('bettercontent.notices.local:better-gameplay-notices:1.0.0')
     // Better Content Fixes uses MixinExtras at runtime. The provider's reobfuscated
     // development JAR does not expose that nested dependency to ForgeGradle runs.
     runtimeOnly 'io.github.llamalad7:mixinextras-forge:0.5.4'
@@ -118,12 +155,20 @@ apply from: rootProject.file('gradle/gametest-evidence.gradle')
 // Non-shipping real-client screenshot harness. Its dimension dependencies stay out of
 // production and the regular GameTest runtime.
 sourceSets {
+    nativeFixture {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
     visualHarness {
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
     }
 }
+configurations.nativeFixtureImplementation.extendsFrom configurations.implementation
+configurations.nativeFixtureCompileOnly.extendsFrom configurations.compileOnly
+configurations.nativeFixtureRuntimeOnly.extendsFrom configurations.runtimeOnly
 configurations.visualHarnessImplementation.extendsFrom configurations.implementation
+configurations.visualHarnessCompileOnly.extendsFrom configurations.compileOnly
 configurations.visualHarnessRuntimeOnly.extendsFrom configurations.runtimeOnly
 def bumblezoneVisualDevelopment = configurations.create('bumblezoneVisualDevelopment')
 def remapVisualBumblezone = tasks.register('remapVisualBumblezone', Exec) {
@@ -141,36 +186,136 @@ def remapVisualBumblezone = tasks.register('remapVisualBumblezone', Exec) {
     }
 }
 
+def celestialVisualOnly = (findProperty('dimensionDrinkIncludeCelestialRuntime') ?: 'false').toString().toBoolean()
 dependencies {
-    visualHarnessRuntimeOnly fg.deobf('curse.maven:aether-255308:6134920')
-    visualHarnessRuntimeOnly fg.deobf('curse.maven:curios-api-309927:6418456')
-    add('bumblezoneVisualDevelopment', fg.deobf('curse.maven:the-bumblezone-362479:8548194'))
-    visualHarnessRuntimeOnly files(layout.buildDirectory.file('visual/dependencies/bumblezone-mapped.jar')).builtBy(remapVisualBumblezone)
-    visualHarnessRuntimeOnly fg.deobf('curse.maven:rats-323596:5904296')
-    visualHarnessRuntimeOnly fg.deobf('curse.maven:citadel-331936:7476570')
+    if (celestialVisualOnly) {
+        // The celestial fixture visits only vanilla Nether. Optional dimension renderers,
+        // bundled Curios and duplicate JarJar libraries are not inputs to moon acceptance.
+        visualHarnessRuntimeOnly fg.deobf('curse.maven:sleeping-overhaul-2-887716:6471182')
+        visualHarnessRuntimeOnly fg.deobf('curse.maven:architectury-api-419699:5137938')
+    } else {
+        visualHarnessRuntimeOnly fg.deobf('curse.maven:aether-255308:6134920')
+        visualHarnessRuntimeOnly fg.deobf('curse.maven:curios-api-309927:6418456')
+        add('bumblezoneVisualDevelopment', fg.deobf('curse.maven:the-bumblezone-362479:8548194'))
+        visualHarnessRuntimeOnly files(layout.buildDirectory.file('visual/dependencies/bumblezone-mapped.jar')).builtBy(remapVisualBumblezone)
+    }
+}
+
+// Incremental Javac may drop processor outputs without reprocessing unchanged mixins.
+// A real generated refmap is a required native bootstrap input, never an ignored warning.
+tasks.named('compileJava', JavaCompile) {
+    options.incremental = false
+    outputs.file(layout.buildDirectory.file('tmp/compileJava/better_dimension_fonts.refmap.json'))
+}
+tasks.named('processNativeFixtureResources') {
+    dependsOn tasks.named('compileJava')
+    from(layout.buildDirectory.file('tmp/compileJava/better_dimension_fonts.refmap.json'))
+    doLast {
+        if (!layout.buildDirectory.file('resources/nativeFixture/better_dimension_fonts.refmap.json').get().asFile.isFile())
+            throw new GradleException('Missing freshly generated native Font refmap')
+    }
+}
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doFirst {
+        gameTestRunDirectory.mkdirs()
+        new File(gameTestRunDirectory, 'native-diagnostic-nonce').text = gameTestRunId
+    }
 }
 
 minecraft.runs {
+    gameTestServer {
+        property 'java.net.preferIPv6Addresses', 'false'
+        property 'betterDimensionFonts.nativeFixture', 'true'
+        property 'terminal.jline', 'false'
+        mods { better_dimension_fonts_native_fixture { source sourceSets.nativeFixture } }
+    }
     visualServer {
         parent minecraft.runs.server
         workingDirectory project.file('build/visual/server')
+        property 'forge.logging.console.level', 'info'
+        jvmArgs "-Xbootclasspath/a:${layout.buildDirectory.get().asFile}/resources/main:${layout.buildDirectory.get().asFile}/classes/java/main:${layout.buildDirectory.get().asFile}/resources/nativeFixture"
         property 'mixin.env.remapRefMap', 'true'
         property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         args '--nogui'
-        mods { better_dimension_fonts_visual_harness { source sourceSets.visualHarness } }
+        property 'java.net.preferIPv6Addresses', 'false'
+        property 'betterDimensionFonts.nativeFixture', 'true'
+        property 'terminal.jline', 'false'
+        mods {
+            better_dimension_fonts_native_fixture { source sourceSets.nativeFixture }
+            better_dimension_fonts_visual_harness { source sourceSets.visualHarness }
+        }
     }
     visualClient {
         parent minecraft.runs.client
         workingDirectory project.file('build/visual/client')
+        property 'forge.logging.console.level', 'info'
+        jvmArgs "-Xbootclasspath/a:${layout.buildDirectory.get().asFile}/resources/main:${layout.buildDirectory.get().asFile}/classes/java/main:${layout.buildDirectory.get().asFile}/resources/nativeFixture"
         property 'mixin.env.remapRefMap', 'true'
         property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         args '--quickPlayMultiplayer', '127.0.0.1:25566', '--width', '1600', '--height', '900'
-        mods { better_dimension_fonts_visual_harness { source sourceSets.visualHarness } }
+        property 'java.net.preferIPv6Addresses', 'false'
+        property 'betterDimensionFonts.nativeFixture', 'true'
+        property 'terminal.jline', 'false'
+        mods {
+            better_dimension_fonts_native_fixture { source sourceSets.nativeFixture }
+            better_dimension_fonts_visual_harness { source sourceSets.visualHarness }
+        }
     }
 }
 
 tasks.withType(JavaExec).configureEach {
     if (name == 'runVisualServer') standardInput = System.in
 }
+
+// Prepare once under the shared Forge-cache lock, then launch these exact commands together
+// under that same lease. No concurrent ForgeGradle invocation reads mutable mapped caches.
+tasks.register('prepareCelestialVisualHarness') {
+    dependsOn 'prepareRunVisualServer', 'prepareRunVisualClient', 'prepareRunVisualServerCompile', 'prepareRunVisualClientCompile'
+    doLast {
+        if (!(findProperty('dimensionDrinkIncludeCelestialRuntime') ?: 'false').toString().toBoolean()) {
+            throw new GradleException('Celestial visual harness requires -PdimensionDrinkIncludeCelestialRuntime=true')
+        }
+        def launch = ['server': 'runVisualServer', 'client': 'runVisualClient'].collectEntries { label, name ->
+            [(label): CelestialLaunchExport.capture(project, tasks.named(name).get())]
+        }
+        launch.providers = [
+            'better-celestial-events': ['better-celestial-events', 'better-celestial-events-0.1.0.jar'],
+            'better-gameplay-notices': ['better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar'],
+            'better-compat-fixes': ['better-compat-fixes', 'better-compat-fixes-0.1.9.jar']
+        ].collectEntries { id, artifact ->
+            def jar = betterContentJar(artifact[0], artifact[1])
+            [(id): [path: jar.absolutePath, sha256: java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex().toString()]]
+        }
+        // Font itself runs from this source project's compiled MOD_CLASSES, not a mapped JAR.
+        // Record the corresponding staged candidate explicitly without claiming it is loaded.
+        def fontArtifact = tasks.named('jar', Jar).get().archiveFile.get().asFile
+        if (!fontArtifact.isFile()) throw new GradleException('Stage the Font candidate before visual preparation')
+        launch.font_artifact = [path: fontArtifact.absolutePath, runtime_kind: 'source-classes',
+            sha256: java.security.MessageDigest.getInstance('SHA-256').digest(fontArtifact.bytes).encodeHex().toString()]
+        def output = layout.buildDirectory.file('visual/launch.json').get().asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(launch))
+    }
+}
 tasks.matching { it.name in ['prepareRunVisualServerCompile', 'prepareRunVisualClientCompile'] }
-    .configureEach { dependsOn remapVisualBumblezone }
+    .configureEach { if (!celestialVisualOnly) dependsOn remapVisualBumblezone }
+
+tasks.register('verifyNativeDiagnosticContracts', Exec) {
+    dependsOn tasks.named('compileNativeFixtureJava')
+    commandLine 'python3', '-B', '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_native_diagnostics.py'
+}
+tasks.named('verifyFast').configure { dependsOn 'verifyNativeDiagnosticContracts' }
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doLast {
+        exec { commandLine 'python3', '-B', 'scripts/check_native_diagnostics.py', gameTestRunDirectory.absolutePath }
+    }
+}
+tasks.named('stageRuntimeJar').configure {
+    doLast {
+        def staged = layout.buildDirectory.file("libs/${project.base.archivesName.get()}-${rootProject.mod_version}.jar").get().asFile
+        new java.util.zip.ZipFile(staged).withCloseable { jar ->
+            if (jar.entries().toList().any { it.name.contains('/nativefixture/') || it.name.contains('/visualharness/') || it.name == 'native-diagnostic-inputs.json' })
+                throw new GradleException('Non-shipping native/visual fixture leaked into runtime JAR')
+        }
+    }
+}

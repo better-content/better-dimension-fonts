@@ -26,6 +26,10 @@ class FontLocationSavedData private constructor(
 ) : SavedData() {
     fun snapshot(): List<FontLocation> = locations.values.toList()
 
+    /** Read-only membership check, including locations whose chunks are currently absent. */
+    fun contains(level: ResourceKey<Level>, pos: BlockPos, definitionId: String): Boolean =
+        locations[key(level, pos)]?.definitionId == definitionId
+
     /** One deterministic naturally generated location per enabled definition; does not load chunks. */
     fun locationsByDefinition(definitionIds: Set<String>): Map<String, FontLocation> =
         locationsByDefinition(locations.values, definitionIds)

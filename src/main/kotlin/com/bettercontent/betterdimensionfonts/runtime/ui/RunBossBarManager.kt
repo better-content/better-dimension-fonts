@@ -3,6 +3,7 @@ package com.bettercontent.betterdimensionfonts.runtime.ui
 import com.bettercontent.betterdimensionfonts.ObeliskConstants
 import com.bettercontent.betterdimensionfonts.content.ObeliskBlockEntity
 import com.bettercontent.betterdimensionfonts.runtime.run.RunRegistry
+import com.bettercontent.betterdimensionfonts.runtime.CelestialIntegration
 import com.bettercontent.betterdimensionfonts.runtime.run.RunState
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerBossEvent
@@ -17,6 +18,7 @@ import java.util.UUID
 object RunBossBarManager {
 
     private val activeBossBars = linkedMapOf<UUID, ServerBossEvent>()
+    private val dawnWarnings = mutableMapOf<UUID, Pair<Long, Int>>()
 
     @SubscribeEvent
     fun onServerTick(event: TickEvent.ServerTickEvent) {
@@ -25,6 +27,8 @@ object RunBossBarManager {
         }
 
         val server = event.server
+        val openWays = CelestialIntegration.openWays(server)
+        if (openWays == null) dawnWarnings.clear()
         val activeRuns = RunRegistry.currentRuns()
         val validRunIds = activeRuns.map { it.id }.toSet()
 
@@ -41,7 +45,20 @@ object RunBossBarManager {
                 return@forEach
             }
 
-            val presentation = presentation(obelisk.getChargePercent())
+            val free = openWays != null && obelisk.isOpenWaysAvailable()
+            if (free) {
+                run.activePlayers.mapNotNull(server.playerList::getPlayer).forEach { player ->
+                    val previous = dawnWarnings[player.uuid]?.takeIf { it.first == openWays!!.occurrenceId }?.second ?: 0
+                    val stage = warningStage(openWays!!.remainingTicks)
+                    if (stage > previous) {
+                        player.sendSystemMessage(Component.literal(if (stage == 2)
+                            "Dawn is close. Font charge drain will resume; empty Fonts will extract you safely."
+                        else "Open Ways ends at the approaching dawn. Font charge drain will resume."))
+                        dawnWarnings[player.uuid] = openWays.occurrenceId to stage
+                    }
+                }
+            }
+            val presentation = presentation(obelisk.getChargePercent(), free)
             if (presentation == null) {
                 removeBossBar(run.id)
                 return@forEach
@@ -91,6 +108,7 @@ object RunBossBarManager {
     @SubscribeEvent
     fun onServerStopped(@Suppress("UNUSED_PARAMETER") event: ServerStoppedEvent) {
         activeBossBars.keys.toList().forEach(::removeBossBar)
+        dawnWarnings.clear()
     }
 
     fun removeBossBar(runId: UUID) {
@@ -99,7 +117,14 @@ object RunBossBarManager {
         }
     }
 
-    internal fun presentation(chargeFraction: Double): FontBossBarPresentation? {
+    internal fun warningStage(remainingTicks: Long): Int = when {
+        remainingTicks in 1..200 -> 2
+        remainingTicks in 201..1000 -> 1
+        else -> 0
+    }
+
+    internal fun presentation(chargeFraction: Double, openWays: Boolean = false): FontBossBarPresentation? {
+        if (openWays) return FontBossBarPresentation(1.0f, "Open Ways: free until dawn", BossEvent.BossBarColor.YELLOW)
         val charge = chargeFraction.coerceIn(0.0, 1.0)
         if (charge >= ObeliskConstants.BOSS_BAR_SHOW_THRESHOLD) return null
         return FontBossBarPresentation(

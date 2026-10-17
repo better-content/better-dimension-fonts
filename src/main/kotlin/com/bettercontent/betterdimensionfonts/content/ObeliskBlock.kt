@@ -161,6 +161,8 @@ class ObeliskBlock(
             return
         }
         val obelisk = level.getBlockEntity(pos) as? ObeliskBlockEntity ?: return
+        // Open Ways uses the tick-bounded verdigris/gold stream, even with an empty tank.
+        if (obelisk.isOpenWaysAvailable()) return
         val charge = obelisk.getChargePercent()
         val ready = obelisk.isReadyToOpen()
         val lowCharge = obelisk.isLowChargeWarning()

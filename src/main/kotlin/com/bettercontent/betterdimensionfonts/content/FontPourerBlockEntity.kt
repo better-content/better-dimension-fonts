@@ -36,12 +36,15 @@ class FontPourerBlockEntity(pos: BlockPos, state: BlockState) :
 
     fun isPouring(): Boolean {
         val current = level ?: return false
+        if (com.bettercontent.betterdimensionfonts.runtime.CelestialIntegration.isOpenWays(current)) return false
         val font = current.getBlockEntity(blockPos.below(2)) as? ObeliskBlockEntity ?: return false
         return current.getBlockState(blockPos.below()).isAir && !tank.isEmpty && font.isRunActive() &&
             font.definitionId == ModLibationFluids.definitionFor(tank.fluid.fluid)
     }
 
     fun serverTick() {
+        // Freeze the partial pour cycle as well as fluid/charge; no refill or catch-up at dawn.
+        if (com.bettercontent.betterdimensionfonts.runtime.CelestialIntegration.isOpenWays(level)) return
         if (++tickPhase < 12) return
         tickPhase = 0
         if (!isPouring()) return

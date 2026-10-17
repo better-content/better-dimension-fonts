@@ -307,6 +307,108 @@ object ObeliskGameTestSupport {
         }
     }
 
+    fun openWaysEconomy(helper: GameTestHelper, existing: Boolean) {
+        val server = helper.level.server
+        helper.assertTrue(net.minecraftforge.fml.ModList.get().isLoaded("better_celestial_events"), "Celestial supplement requires the real provider")
+        val first = connectHeadlessPlayer(helper)
+        val second = connectHeadlessPlayer(helper)
+        val origin = helper.absolutePos(BlockPos(9, 2, 3))
+        val pourPos = helper.absolutePos(BlockPos(5, 2, 3))
+        var runId: UUID? = null
+        fun command(text: String) = server.commands.performPrefixedCommand(server.createCommandSourceStack().withPermission(4), text)
+        fun cleanup() {
+            command("celestial end")
+            Files.deleteIfExists(ObeliskDataManager.definitionsPath().resolve("test_celestial_end.json"))
+            reloadData()
+            runId?.let { RunRegistry.finishRun(server, it) }
+            (helper.level.getBlockEntity(pourPos) as? ObeliskBlockEntity)?.setActiveRun(null)
+            first.close(server)
+            second.close(server)
+        }
+        try {
+            command("celestial end")
+            // The shipped End definition is intentionally disabled; this native fixture enables
+            // only its local test copy rather than weakening valid-Font admission in production.
+            writeDefinitionOverride("test_celestial_end.json", requireNotNull(ObeliskDataManager.getObelisk("end")).copy(enabled = true, worldgenWeight = 1.0, joinChargeCost = 200.0))
+            reloadData()
+            placeChargedDefinitionObelisk(helper, origin, "end")
+            val font = helper.level.getBlockEntity(origin) as ObeliskBlockEntity
+            if (!existing) {
+                font.setChargeStoredForDebug(0)
+                helper.assertTrue(!font.isReadyToOpen() && font.getStartChargeCost() > 0.0 && font.getJoinChargeCost() > 0.0, "Ordinary empty Fonts remain charge-gated")
+                command("celestial force open_ways")
+            }
+            val result = RunRegistry.activateObelisk(first.player, font, origin)
+            helper.assertTrue(result?.startsWith("Drinking from ") == true, "Expected entry, got $result")
+            runId = requireNotNull(RunRegistry.getRun(first.player.uuid)).runId
+            if (existing) command("celestial force open_ways")
+            helper.assertTrue(font.isOpenWaysAvailable(), "Expected production Open Ways snapshot")
+            val stored = font.getChargeStored()
+            // A paused fractional drain must survive unchanged, including through free joining.
+            val tag = font.saveWithoutMetadata()
+            tag.putDouble("fractional_drain_carry", 0.625)
+            font.load(tag)
+            val join = RunRegistry.activateObelisk(second.player, font, origin)
+            helper.assertTrue(join?.startsWith("Drinking from ") == true, "Expected free join, got $join")
+            helper.assertTrue(font.getStartChargeCost() == 0.0 && font.getJoinChargeCost() == 0.0, "Expected waived opening/join costs")
+            helper.assertTrue(FontChunkTicketManager.hasTicket(runId!!), "Free sessions still require origin tickets")
+
+            placeChargedDefinitionObelisk(helper, pourPos, "nether")
+            val pourFont = helper.level.getBlockEntity(pourPos) as ObeliskBlockEntity
+            pourFont.setChargeStoredForDebug(0)
+            pourFont.setActiveRun(UUID.randomUUID())
+            helper.level.setBlock(pourPos.above(2), ModBlocks.FONT_POURER.get().defaultBlockState(), 3)
+            val pourer = helper.level.getBlockEntity(pourPos.above(2)) as com.bettercontent.betterdimensionfonts.content.FontPourerBlockEntity
+            val fluid = requireNotNull(net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(ResourceLocation("better_dimension_fonts", "nether_libation")))
+            pourer.fluidHandler().fill(net.minecraftforge.fluids.FluidStack(fluid, 1000), net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE)
+
+            val nightDay = server.overworld().dayTime / 24000L
+            server.overworld().dayTime = nightDay * 24000L + 23000L
+            helper.runAfterDelay(20) {
+                first.pump(server); second.pump(server)
+                helper.assertTrue(first.systemMessages().any { it.contains("Open Ways ends at the approaching dawn") } &&
+                    second.systemMessages().any { it.contains("Open Ways ends at the approaching dawn") }, "Both travellers receive the 1000-tick warning")
+                server.overworld().dayTime = nightDay * 24000L + 23800L
+            }
+            helper.runAfterDelay(40) {
+                first.pump(server); second.pump(server)
+                helper.assertTrue(first.systemMessages().any { it.contains("Dawn is close.") } &&
+                    second.systemMessages().any { it.contains("Dawn is close.") }, "Both travellers receive the 200-tick warning")
+            }
+            helper.runAfterDelay(60) {
+                try {
+                    first.pump(server); second.pump(server)
+                    helper.assertTrue(font.getChargeStored() == stored, "Open Ways must not drain or refill existing stored charge")
+                    helper.assertTrue(font.saveWithoutMetadata().getDouble("fractional_drain_carry") == 0.625, "Free costs/drain preserve fractions")
+                    helper.assertTrue(pourFont.getChargeStored() == 0 && pourer.fluidHandler().getFluidInTank(0).amount == 1000 && !pourer.isPouring(), "Open Ways pauses Pourer without refilling")
+                    helper.assertTrue(RunBossBarManager.bossBarTitle(runId!!) == "Open Ways: free until dawn", "Expected free-until-dawn UI even for empty Font")
+                    server.overworld().dayTime = nightDay * 24000L + 23999L
+                    helper.assertTrue(font.isOpenWaysAvailable() && font.getModifiedBaseDrain() == 0.0, "Last night tick remains free")
+                    helper.assertTrue(first.systemMessages().count { it.contains("Open Ways ends at the approaching dawn") } == 1 &&
+                        first.systemMessages().count { it.contains("Dawn is close.") } == 1, "Warnings are once per traveller and threshold")
+                    font.setChargeStoredForDebug(0)
+                    // Exercise the real Overworld dawn boundary, not a consumer-local switch.
+                    server.overworld().dayTime = (server.overworld().dayTime / 24000L + 1) * 24000L
+                    waitUntil(helper, 80, failureMessage = { "Expected dawn drain and safe empty-Font extraction" }, condition = {
+                        first.pump(server); second.pump(server)
+                        RunRegistry.get(runId!!) == null && first.player.serverLevel() === helper.level && second.player.serverLevel() === helper.level
+                    }, onSuccess = {
+                        helper.assertTrue(!FontChunkTicketManager.hasTicket(runId!!), "Dawn extraction releases ticket")
+                        helper.assertTrue(font.getStartChargeCost() > 0.0, "Normal entry costs resume without retroactive costs")
+                        cleanup()
+                        helper.succeed()
+                    })
+                } catch (failure: Throwable) {
+                    cleanup()
+                    throw failure
+                }
+            }
+        } catch (failure: Throwable) {
+            cleanup()
+            throw failure
+        }
+    }
+
     fun smokeEntryCostAndActiveDrainCloseDryRun(helper: GameTestHelper) {
         val server = helper.level.server
         val client = connectHeadlessPlayer(helper)
@@ -1394,39 +1496,81 @@ object ObeliskGameTestSupport {
 
         helper.assertTrue(anchors.isNotEmpty(), "Expected overworld terrain test window to include deterministic candidate site anchors")
 
-        // Force vanilla terrain and structures to finish before the deterministic test
-        // surfaces are authored; otherwise a later getChunk call can replace fixtures.
-        anchors.forEach { anchor ->
-            val anchorChunkX = anchor.x shr 4
-            val anchorChunkZ = anchor.z shr 4
-            for (chunkX in anchorChunkX - 6..anchorChunkX + 6) {
-                for (chunkZ in anchorChunkZ - 6..anchorChunkZ + 6) {
-                    helper.level.getChunk(chunkX, chunkZ)
+        // Complete the same terrain/surface/generation/search phases without blocking a
+        // live native server tick on thousands of chunks and twelve large block scans.
+        val chunks = anchors.flatMap { anchor ->
+            val x = anchor.x shr 4
+            val z = anchor.z shr 4
+            (x - 6..x + 6).flatMap { cx -> (z - 6..z + 6).map { cz -> ChunkPos(cx, cz) } }
+        }.distinct()
+        val generatedFonts = mutableListOf<BlockPos>()
+        // Synchronous getChunk's transient tickets expire between scheduled phases.
+        // Own explicit non-ticking FULL-chunk leases until all real generator assertions finish.
+        val terrainTicket = net.minecraft.server.level.TicketType.create(
+            "font_gametest_terrain", java.util.Comparator.comparingLong<ChunkPos> { it.toLong() }
+        )
+        val leasedChunks = mutableListOf<ChunkPos>()
+        fun releaseTerrain() {
+            leasedChunks.forEach { helper.level.chunkSource.removeRegionTicket(terrainTicket, it, 0, it) }
+            leasedChunks.clear()
+        }
+        fun schedule(delay: Long, action: () -> Unit) {
+            helper.runAfterDelay(delay) {
+                try { action() } catch (failure: Throwable) {
+                    releaseTerrain()
+                    throw failure
                 }
             }
         }
-        anchors.forEach { anchor -> prepareGenerationSurface(helper, anchor.atY(4)) }
 
-        anchors.forEach { anchor ->
-            val anchorChunkX = anchor.x shr 4
-            val anchorChunkZ = anchor.z shr 4
-            ObeliskFeature.generatePlacedSitesForChunkRangeForTests(
-                helper.level,
-                anchorChunkX - 6,
-                anchorChunkX + 6,
-                anchorChunkZ - 6,
-                anchorChunkZ + 6
-            )
+        fun findNext(index: Int) {
+            if (index == anchors.size) {
+                val distinctFonts = generatedFonts.distinct()
+                helper.assertTrue(distinctFonts.isNotEmpty(), "Expected generated overworld chunks to accept dimensional font cultivation center placement in sampled chunks")
+                distinctFonts.forEachIndexed { fontIndex, fontPos ->
+                    assertGeneratedAltar(helper, fontPos, "generated-overworld-$fontIndex", requireBroadLowerStep = false)
+                }
+                releaseTerrain()
+                helper.succeed()
+                return
+            }
+            locateGeneratedObeliskPosInArea(helper, anchors[index].atY(32), 48)?.let(generatedFonts::add)
+            schedule(5) { findNext(index + 1) }
         }
-        val generatedFonts = anchors.mapNotNull { anchor ->
-            locateGeneratedObeliskPosInArea(helper, anchor.atY(32), 48)
-        }.distinct()
-
-        helper.assertTrue(generatedFonts.isNotEmpty(), "Expected generated overworld chunks to accept dimensional font cultivation center placement in sampled chunks")
-        generatedFonts.distinct().forEachIndexed { index, fontPos ->
-            assertGeneratedAltar(helper, fontPos, "generated-overworld-$index", requireBroadLowerStep = false)
+        fun generateNext(index: Int) {
+            if (index == anchors.size) {
+                findNext(0)
+                return
+            }
+            val anchor = anchors[index]
+            val x = anchor.x shr 4
+            val z = anchor.z shr 4
+            ObeliskFeature.generatePlacedSitesForChunkRangeForTests(helper.level, x - 6, x + 6, z - 6, z + 6)
+            schedule(5) { generateNext(index + 1) }
         }
-        helper.succeed()
+        fun surfaceNext(index: Int) {
+            if (index == anchors.size) {
+                generateNext(0)
+                return
+            }
+            prepareGenerationSurface(helper, anchors[index].atY(4))
+            schedule(5) { surfaceNext(index + 1) }
+        }
+        fun loadNext(index: Int) {
+            if (index == chunks.size) {
+                surfaceNext(0)
+                return
+            }
+            val end = minOf(index + 8, chunks.size)
+            chunks.subList(index, end).forEach {
+                helper.level.chunkSource.addRegionTicket(terrainTicket, it, 0, it)
+                leasedChunks += it
+                helper.level.getChunk(it.x, it.z)
+            }
+            schedule(1) { loadNext(end) }
+        }
+        // All vanilla terrain finishes before any surface is authored, as before.
+        schedule(1) { loadNext(0) }
     }
 
     fun underwaterWorldgenDoesNotPlaceFonts(helper: GameTestHelper) {
@@ -2558,6 +2702,8 @@ object ObeliskGameTestSupport {
     ) {
         private var closed = false
 
+        fun systemMessages(): List<String> = recorder.systemMessages.toList()
+
         fun pump(server: net.minecraft.server.MinecraftServer) {
             requireNotNull(server.connection) { "Expected server connection listener to be available" }.tick()
             recorder.pump(clientConnection)
@@ -2583,8 +2729,13 @@ object ObeliskGameTestSupport {
         val customPayloadChannels = CopyOnWriteArrayList<ResourceLocation>()
         val loginDimensions = CopyOnWriteArrayList<ResourceKey<Level>>()
         val respawnDimensions = CopyOnWriteArrayList<ResourceKey<Level>>()
+        val systemMessages = CopyOnWriteArrayList<String>()
 
         val listener: PacketListener = object : NoOpClientPacketListener() {
+            override fun handleSystemChat(packet: net.minecraft.network.protocol.game.ClientboundSystemChatPacket) {
+                systemMessages += packet.content().string
+            }
+
             override fun handleLogin(packet: ClientboundLoginPacket) {
                 loginDimensions += packet.dimension
             }
@@ -2618,7 +2769,9 @@ object ObeliskGameTestSupport {
 
         fun pump(connection: Connection) {
             clientConnection = connection
-            connection.tick()
+            // A closed native Connection.tick() calls handleDisconnection again.
+            // Server/client close can race: never re-pump an already closed fake client.
+            if (connection.isConnected) connection.tick()
         }
     }
 }

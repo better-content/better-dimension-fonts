@@ -17,10 +17,11 @@ Pack-owned obelisk and charge-font worldgen/runtime mod for Forge `1.20.1`.
 ```
 
 `verifyFast` runs the JVM verification lane. `verifyFull` adds **all production
-GameTests** (50 at this revision). `verifySmoke` adds only the 11 lifecycle smoke
+GameTests** without the optional celestial provider. `verifySmoke` adds only the lifecycle smoke
 tests. `./gradlew headlessGameTest -PdimensionDrinkGameTestSelection=runtime` selects a focused
 profile; supported selectors are `all`, `smoke`, `run`, `activation`, `rewards`,
-`void`, `data`, `template`, `multiplayer`, `commands`, and `runtime`. Unknown selectors
+`void`, `data`, `template`, `multiplayer`, `commands`, `runtime`, and the explicit provider-present
+`celestial` supplement. Unknown selectors
 and overrides conflicting with `verifyFull` or `verifySmoke` fail.
 
 If an incremental Java compilation leaves the Mixin annotation processor's
@@ -67,6 +68,72 @@ without transport, rejected transport, and server-stop cleanup do not emit it. A
 handling applies only while the player is bound to an Aether Font session. When Better Content
 Threads is present, the optional bridge reuses the active `the_end_is_not_a_door` correlation token
 to emit `font_route_completed=returned`.
+
+## Open Ways (optional Better Celestial Events integration)
+
+When `better_celestial_events` is installed, its typed snapshot controls Open Ways using the
+Overworld night clock. Existing and new valid bound Fonts waive opening, joining, and ongoing
+charge drain until dawn, including an empty Font. This does not bypass destination validation,
+session admission, cooldown, origin-ticket or safety limits. No charge is refilled and no entry
+cost is charged retroactively. Stored charge and fractional drain remain intact; ordinary idle
+recharge is unchanged. Pourers pause fluid consumption, charge restoration, and their partial
+pour cycle. At dawn the usual drain resumes, including normal safe extraction from a dry Font.
+Travellers see a free-until-dawn bar and warnings at 1,000 and 200 remaining Overworld ticks.
+
+Client-only verdigris/gold court streams, central plumes, and pulses are bounded to 42 motes per
+second per nearby valid Font (32-block viewing radius), even with an empty reservoir. They never
+fill the reservoir visually and do not decorate return seals. The optional bridge registers a
+read-only natural-Font locator with the provider; it uses only the discovery index and already
+loaded chunk checks, retaining indexed unloaded locations as unknown rather than generating terrain.
+With the provider absent, the bridge is inert. There is no reflection or reverse Font dependency.
+
+Prepare the canonical `better-celestial-events-0.1.0.jar` before compiling, either in the sibling
+`build/libs` directory or through `BC_CUSTOM_MOD_JAR_DIR` (which also supplies other local providers).
+The runtime remains compile-only by default. In addition to the full absent-provider gate, run the
+explicit native supplement with a freshly prepared provider:
+
+```bash
+python3 scripts/forge-cache-lock.py ./gradlew headlessGameTest \
+  -PdimensionDrinkGameTestSelection=celestial -PdimensionDrinkIncludeCelestialRuntime=true --no-daemon
+```
+
+The non-shipping celestial real-client profile uses only mandatory Font providers plus Sleeping
+Overhaul 2 and Architectury. Its Nether route does not load unrelated optional dimension mods. Prepare launches with `prepareCelestialVisualHarness` and
+`-PdimensionDrinkIncludeCelestialRuntime=true`, then run
+`python3 scripts/celestial-visual-harness.py --launch build/visual/launch.json --output ABSENT_OUTPUT_DIRECTORY --provider /absolute/path/to/better-celestial-events-0.1.0.jar --native-library-dir /absolute/path/to/inventoried/flite/lib`.
+Use the user-local native SDK recorded in [toolchains](../../better-content-modpack/docs/toolchains.md).
+The fixture supplies its explicit loader path and uses a null OpenAL backend without real-time
+priority requests; audio playback is not an acceptance claim. Its declared non-shipping Nether
+definition sets passive regeneration to zero solely to hold empty/partial/full states steady across
+both client frames; production regeneration remains unchanged. Local provider launches verify
+canonical-to-mapped Forge input hashes. Stage the passed Font source candidate before preparing
+visual launches. Font itself runs from compiled source `MOD_CLASSES`, not its mapped production JAR;
+the export separately records and checks the corresponding staged Font checksum without claiming
+that JAR is loaded by this source fixture.
+Hold one shared Forge-cache lock across preparation and the entire controller run. The controller
+starts one fresh server and two real software-rendered clients, captures four special moons and
+ordinary-moon restoration, empty/partial/full Font particle scenes, and real Font entry/dawn
+extraction. It uses native commands/framebuffer capture, not synthetic pointer input. Its summary
+reports observations, all diagnostic records, and owned-process cleanup; diagnostic classification
+and actual image inspection remain required before claiming acceptance. This is a focused mod
+fixture, not full-pack or production-JAR acceptance. Clients must close Minecraft normally before
+Xvfb is stopped; a reaped process is not evidence of a successful exit.
+
+`verifyFast` includes diagnostic-classifier regression tests. Every native GameTest invocation
+checks both `latest.log` and `debug.log` against current-invocation metadata exported by the
+non-shipping native fixture, exact Forge/Minecraft/language/mixin resource inputs, and actual
+registered config defaults. Unknown warnings, errors, malformed/repeated diagnostics, and timing
+warnings fail; there is no blanket bootstrap or missing-refmap exception. The generated refmap is
+present on native bootstrap classpaths. For real clients, run
+`python3 scripts/check_native_diagnostics.py /absolute/path/to/each/native/process/directory`
+after shutdown, separately for the server and both clients. Actual image inspection remains separate.
+Native GameTests use an explicitly authored flat Overworld without unrelated vanilla structures;
+generation tests create their deterministic terrain surfaces and exercise the real Font site generator.
+The generation test schedules bounded chunk loading and its twelve surface/generation/search steps
+across native ticks, preserving the same sampled inputs and altar assertions rather than suppressing
+timing diagnostics or blocking one tick on all terrain setup and block scans.
+The fixture initializes Netty's IPv4 preference for its declared loopback-only network, not production
+network settings. Native/visual fixture classes and diagnostic metadata are forbidden in the staged JAR.
 
 ## Release artifact
 

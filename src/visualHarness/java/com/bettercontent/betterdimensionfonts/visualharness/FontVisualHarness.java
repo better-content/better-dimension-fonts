@@ -57,6 +57,21 @@ public final class FontVisualHarness {
                         .then(Commands.argument("angle", StringArgumentType.word())
                                 .executes(context -> view(EntityArgument.getPlayer(context, "player"),
                                         StringArgumentType.getString(context, "angle"))))))
+                .then(Commands.literal("enter").then(Commands.argument("player", EntityArgument.player())
+                        .executes(context -> enter(EntityArgument.getPlayer(context, "player")))))
+                .then(Commands.literal("return").then(Commands.argument("player", EntityArgument.player())
+                        .executes(context -> {
+                            ServerPlayer player = EntityArgument.getPlayer(context, "player");
+                            String result = com.bettercontent.betterdimensionfonts.runtime.run.RunRegistry.INSTANCE.drinkReturnFont(player);
+                            System.out.println("FONT_VISUAL return=" + result + " player=" + player.getGameProfile().getName());
+                            return result.startsWith("Drinking") ? 1 : 0;
+                        })))
+                .then(Commands.literal("charge").then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("state", StringArgumentType.word())
+                                .executes(context -> charge(EntityArgument.getPlayer(context, "player"),
+                                        StringArgumentType.getString(context, "state"))))))
+                .then(Commands.literal("quit").then(Commands.argument("player", EntityArgument.player())
+                        .executes(context -> capture(EntityArgument.getPlayer(context, "player"), "__shutdown__"))))
                 .then(Commands.literal("capture").then(Commands.argument("player", EntityArgument.player())
                         .then(Commands.argument("name", StringArgumentType.word())
                                 .executes(context -> capture(EntityArgument.getPlayer(context, "player"),
@@ -104,15 +119,79 @@ public final class FontVisualHarness {
                         RandomSource.create(0x464f4e5456495355L), box, slice, BlockPos.ZERO);
             }
         }
+        BlockPos returnControl = center.offset(3, 3, 0);
+        level.setBlock(returnControl.below(), Blocks.OXIDIZED_COPPER.defaultBlockState(), 3);
+        level.setBlock(returnControl, com.bettercontent.betterdimensionfonts.registry.ModBlocks.INSTANCE.getRETURN_FONT().get().defaultBlockState(), 3);
+        if (level.getBlockEntity(returnControl) instanceof com.bettercontent.betterdimensionfonts.content.ObeliskBlockEntity seal)
+            seal.setChargeStoredForDebug(0);
+        System.out.println("FONT_VISUAL return_seal_control=" + returnControl);
         view(player, "overview");
         player.sendSystemMessage(Component.literal("Font visual: " + font + " on " + biome + " at " + center));
         return 1;
+    }
+
+    private static int enter(final ServerPlayer player) {
+        if (center == null) return 0;
+        ServerLevel level = player.serverLevel();
+        for (int dx = -5; dx <= 5; dx++) for (int dy = 0; dy <= 8; dy++) for (int dz = -5; dz <= 5; dz++) {
+            BlockPos pos = center.offset(dx, dy, dz);
+            var state = level.getBlockState(pos);
+            if (!state.is(com.bettercontent.betterdimensionfonts.registry.ModBlocks.INSTANCE.getOBELISK().get())) continue;
+            player.connection.teleport(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 2.5, 180.0f, 0.0f);
+            player.connection.resetPosition();
+            player.setNoGravity(false);
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            state.getBlock().use(state, level, pos, player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
+            boolean bound = com.bettercontent.betterdimensionfonts.runtime.run.RunRegistry.INSTANCE.getRun(player.getUUID()) != null;
+            System.out.println("FONT_VISUAL entered=" + bound + " player=" + player.getGameProfile().getName()
+                    + " dimension=" + player.serverLevel().dimension().location());
+            return bound ? 1 : 0;
+        }
+        return 0;
+    }
+
+    /** Pair with /celestial force open_ways; empty reservoirs must stay empty beneath the particles. */
+    private static int charge(final ServerPlayer player, final String state) {
+        if (center == null || !List.of("empty", "half", "full").contains(state)) return 0;
+        ServerLevel level = player.serverLevel();
+        int changed = 0;
+        for (int dx = -5; dx <= 5; dx++) for (int dy = 0; dy <= 8; dy++) for (int dz = -5; dz <= 5; dz++) {
+            BlockPos pos = center.offset(dx, dy, dz);
+            if (level.getBlockEntity(pos) instanceof com.bettercontent.betterdimensionfonts.content.ObeliskBlockEntity font
+                    && font.getBlockState().is(com.bettercontent.betterdimensionfonts.registry.ModBlocks.INSTANCE.getOBELISK().get())) {
+                font.setChargeStoredForDebug(state.equals("empty") ? 0 : state.equals("half") ? font.getMaxChargeStored() / 2 : font.getMaxChargeStored());
+                font.setActiveRun(null);
+                System.out.println("FONT_VISUAL readiness=" + font.isReadyToOpen() + " free=" + font.isOpenWaysAvailable()
+                        + " stored=" + font.saveWithoutMetadata().getInt("charge_stored") + " at=" + pos);
+                changed++;
+            }
+        }
+        System.out.println("FONT_VISUAL charge=" + state + " count=" + changed);
+        return changed;
     }
 
     private static int view(final ServerPlayer player, final String angle) {
         if (center == null) return 0;
         double x; double y; double z; float yaw; float pitch;
         switch (angle) {
+            case "close" -> {
+                // Separate real Creative observers so neither camera sits inside the other's head.
+                boolean secondObserver = player.getGameProfile().getName().equals("FontB");
+                x = center.getX() + (secondObserver ? -1.5 : 0.5);
+                y = center.getY() + 3.6; z = center.getZ() + 5.5;
+                yaw = secondObserver ? 202.0f : 180.0f; pitch = 18.0f;
+            }
+            case "control" -> {
+                boolean secondObserver = player.getGameProfile().getName().equals("FontB");
+                x = center.getX() + (secondObserver ? 7.5 : 6.5);
+                y = center.getY() + 3.6; z = center.getZ() + 3.0;
+                yaw = secondObserver ? 122.0f : 130.0f; pitch = secondObserver ? 20.0f : 24.0f;
+            }
+            case "sky" -> {
+                x = center.getX() + 0.5; y = center.getY() + 8.5; z = center.getZ() + 0.5;
+                yaw = 0.0f; pitch = -82.0f;
+            }
             case "detail" -> {
                 x = center.getX() + 7.5; y = center.getY() + 8.5; z = center.getZ() + 13.5;
                 yaw = 150.0f; pitch = 22.0f;
@@ -128,6 +207,9 @@ public final class FontVisualHarness {
             default -> { return 0; }
         }
         player.connection.teleport(x, y, z, yaw, pitch);
+        // Fixture camera teleports can be acknowledged inside the same local server tick.
+        // Keep the native movement baseline coherent; never disable speed validation.
+        player.connection.resetPosition();
         player.setNoGravity(true);
         return 1;
     }
