@@ -1296,7 +1296,14 @@ object ObeliskGameTestSupport {
         reloadData()
 
         val center = chunkInteriorTestAnchor(helper.absolutePos(BlockPos(260, 3, 4)))
-        prepareGenerationSurface(helper, center, helper.level.maxBuildHeight - 1)
+        prepareGenerationSurfaceInSlices(helper, center, helper.level.maxBuildHeight - 1) {
+            verifyStructurePieceWorldgenProducesCompleteFontAltarSites(helper, definition, center)
+        }
+    }
+
+    private fun verifyStructurePieceWorldgenProducesCompleteFontAltarSites(
+        helper: GameTestHelper, definition: ObeliskDefinition, center: BlockPos
+    ) {
         val altarCenter = center.below()
         val fixtureChunk = ChunkPos(altarCenter)
         for (chunkX in fixtureChunk.x - 2..fixtureChunk.x + 2) {
@@ -2442,9 +2449,13 @@ object ObeliskGameTestSupport {
     }
 
     private fun prepareGenerationSurface(helper: GameTestHelper, center: BlockPos, clearThroughY: Int = center.y + 12) {
+        writeGenerationSurfaceSlice(helper, center, helper.level.minBuildHeight, clearThroughY)
+    }
+
+    private fun writeGenerationSurfaceSlice(helper: GameTestHelper, center: BlockPos, startY: Int, endY: Int) {
         for (dx in -20..20) {
             for (dz in -20..20) {
-                for (y in helper.level.minBuildHeight..clearThroughY) {
+                for (y in startY..endY) {
                     val dy = y - center.y
                     val state = when {
                         dy <= -3 -> Blocks.STONE.defaultBlockState()
@@ -2456,6 +2467,21 @@ object ObeliskGameTestSupport {
                 }
             }
         }
+    }
+
+    private fun prepareGenerationSurfaceInSlices(
+        helper: GameTestHelper, center: BlockPos, clearThroughY: Int, onComplete: () -> Unit
+    ) {
+        fun writeSlice(startY: Int) {
+            if (startY > clearThroughY) {
+                onComplete()
+                return
+            }
+            val endY = minOf(startY + 7, clearThroughY)
+            writeGenerationSurfaceSlice(helper, center, startY, endY)
+            helper.runAfterDelay(1) { writeSlice(endY + 1) }
+        }
+        helper.runAfterDelay(1) { writeSlice(helper.level.minBuildHeight) }
     }
 
     private fun chunkInteriorTestAnchor(pos: BlockPos): BlockPos {
