@@ -34,9 +34,9 @@ During the active task, each GameTest invocation keeps its generated world, logs
 `build/gametest/<run-id>/`. The gate compares actual runtime registration and
 successful completion against the reviewed IDs in `gametest/profiles/`, rejects
 missing or incomplete evidence, and records the selected profile and run ID.
-Inspect failed evidence during diagnosis. A later run uses a new fixture; at task handoff
-all previous worlds/reports and idle caches/build outputs are disposed of under the shared
-[disposal policy](../../better-content-modpack/docs/policies/generated-data.md). Runtime charge scenarios
+Inspect failed evidence during diagnosis. A later run uses a new fixture; retain previous
+worlds/reports and caches/build outputs across handoffs by default under the shared
+[retention policy](../../better-content-modpack/docs/policies/generated-data.md). Finishing activity deletes nothing. Runtime charge scenarios
 use deterministic modifier fixtures and separate batches; worldgen scenarios
 prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 12 negative execution-evidence checks without starting Forge.
@@ -122,9 +122,14 @@ Xvfb is stopped; a reaped process is not evidence of a successful exit.
 `verifyFast` includes diagnostic-classifier regression tests. Every native GameTest invocation
 checks both `latest.log` and `debug.log` against current-invocation metadata exported by the
 non-shipping native fixture, exact Forge/Minecraft/language/mixin resource inputs, and actual
-registered config defaults. Unknown warnings, errors, malformed/repeated diagnostics, and timing
-warnings fail; there is no blanket bootstrap or missing-refmap exception. The generated refmap is
-present on native bootstrap classpaths. For real clients, run
+registered config defaults. WARN presence, wording, repetition, missing classification, or timing
+alone does not fail correctness. Compatibility classifications remain input/context-bound diagnostic
+observations, not warning-count allowances. Actual failed operations (including script/registry,
+assertion, corruption and crash signals) fail regardless of severity; every ERROR/FATAL blocks even
+when its message resembles familiar advisory text. Input hashes, fixture/version identity, native
+execution completeness, deadlines and process cleanup remain independent gates. This parser does
+not invent a performance budget from a timing notice. The generated refmap remains required on
+native bootstrap classpaths. For real clients, run
 `python3 scripts/check_native_diagnostics.py /absolute/path/to/each/native/process/directory`
 after shutdown, separately for the server and both clients. Actual image inspection remains separate.
 Native GameTests use an explicitly authored flat Overworld without unrelated vanilla structures;
