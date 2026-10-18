@@ -13,8 +13,9 @@ import net.minecraftforge.event.server.ServerAboutToStartEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
 
 object VillageShrinePools {
-    // Twelve house attempts give roughly one shrine per five newly generated villages.
-    private const val TARGET_ATTEMPT_RATE = 0.01842347
+    // Twelve house attempts give roughly one shrine per fifteen newly generated villages.
+    // 1 - (1 - 1/15)^(1/12): one third of the former one-in-five village rate.
+    private const val TARGET_ATTEMPT_RATE = 0.005732909752416027
     private const val SHRINE_WEIGHT = 2
 
     data class ShrinePoolTarget(

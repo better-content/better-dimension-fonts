@@ -45,6 +45,8 @@ prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 
 Better Dimension Fonts bundles the Aether, Bumblezone, and Nether expedition Font definitions at equal default `worldgenWeight`. A weight controls deterministic selection at an eligible structure start; it does not guarantee equal visible counts in a finite explored area. Terrain rejection, exploration history, destroyed Fonts, and map sales are measured separately from configured probability.
 
+Natural structure placement retains one third of candidate starts (`frequency: 0.33333334`), keeping the existing 30-chunk spacing and 9-chunk separation. This reduces expected wild Font density to one third without changing destination weights. It affects newly generated terrain only; existing Fonts are not removed.
+
 Layout and definition selection use independent deterministic seed domains, so terrain opportunity cannot systematically favor a Font type. Custom JSON definitions remain supported when their weights are positive and finite. The effective normalized weights are logged on reload and available with the permission-level-2 `/font audit` command.
 
 Use the permission-level-2 `/font find` command to list one indexed natural Font for each enabled worldgen definition. Found coordinates are clickable and teleport the operator to the site. The command only reads locations recorded as generated chunks load; it does not search or generate remote terrain. A missing type means more terrain must be explored before that world's generated Fonts can be fully checked.
@@ -55,7 +57,7 @@ New Overworld Font sites use a circular oxidized-copper court without water pool
 
 New Aether arrival sites must retain at least 1,024 existing `aether`-namespace blocks in the nine chunks centered on the landing chunk after the return court's projected floor, support-column, clearance, and return-Font writes. Sparse candidates are skipped within the existing configured search radius, before any court is placed. If none qualifies, entry is rejected without spending the opening entry charge or binding the player; no emergency Aether island is built and unarrived-site rollback does not clear natural mobs. Preparation/activation/rollback still use the normal site lifecycle. Saved arrival positions are reused unchanged, and other dimensions keep their existing arrival behavior.
 
-Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. The shrine joins their house pools with a street-facing entrance. Its selection rate targets roughly one shrine in five newly generated villages when a village makes twelve house placement attempts; actual rates vary with village layout and available space.
+Vanilla plains, desert, savanna, snowy, and taiga villages can include a Font shrine. The shrine joins their house pools with a street-facing entrance. Its selection rate targets roughly one shrine in fifteen newly generated villages when a village makes twelve house placement attempts; actual rates vary with village layout and available space.
 
 The craftable Font Pourer sits two blocks above a Font, leaving one air block for a visible pour. It accepts the matching Nether, Aether, or Bumblezone Libation by bucket or fluid automation and restores charge only while a run is active. One bucket supplies 48,000 charge, about ten extra minutes at the current 80 charge per second drain; a nominal 15,000-charge Font lasts roughly three minutes before entry costs. The Font itself has no fluid capability.
 

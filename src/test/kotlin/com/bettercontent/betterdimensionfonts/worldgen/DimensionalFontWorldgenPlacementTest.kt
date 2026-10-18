@@ -36,6 +36,9 @@ class DimensionalFontWorldgenPlacementTest {
             Regex(""""type"\s*:\s*"minecraft:random_spread"""").containsMatchIn(structureSet),
             "Dimensional font worldgen should be controlled by vanilla random-spread structure placement"
         )
+        val placement = JsonParser.parseString(structureSet).asJsonObject.getAsJsonObject("placement")
+        assertEquals(1.0 / 3.0, placement.get("frequency").asDouble, 1e-7,
+            "Natural Fonts should retain one third of their former candidate starts")
         assertTrue(
             Regex(""""spacing"\s*:\s*30\b""").containsMatchIn(structureSet),
             "Dimensional font structure rarity should stay explicit and reviewable"
