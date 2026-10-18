@@ -122,17 +122,16 @@ class VillageFontShrineTest {
         val houseAttemptWindows = listOf(8, 12, 16, 20)
         VillageShrinePools.TARGETS.forEach { target ->
             val attemptRate = target.estimatedAttemptRate()
-            assertEquals(1.0 / 15.0, 1.0 - (1.0 - attemptRate).pow(12.0), 1e-7,
-                "Twelve attempts should yield one third of the former one-in-five village rate for ${target.style}")
+            assertTrue(attemptRate in 0.0183..0.0186, "Configured per-attempt shrine rate drifted for ${target.style}: $attemptRate")
 
             houseAttemptWindows.forEach { attempts ->
                 val expectedVillageRate = 1.0 - (1.0 - attemptRate).pow(attempts.toDouble())
-                assertTrue(expectedVillageRate in 0.04..0.11, "Modeled village shrine rate for ${target.style} fell outside the target band with $attempts house attempts: $expectedVillageRate")
+                assertTrue(expectedVillageRate in 0.13..0.32, "Modeled village shrine rate for ${target.style} fell outside the target band with $attempts house attempts: $expectedVillageRate")
             }
         }
 
         val sampledRate = sampleVillageRate(VillageShrinePools.TARGETS.first(), villages = 20_000, houseAttempts = 12, seed = 90210L)
-        assertTrue(sampledRate in 0.055..0.08, "Deterministic shrine sampling should stay close to 1 shrine per 15 villages, observed=$sampledRate")
+        assertTrue(sampledRate in 0.18..0.22, "Deterministic shrine sampling should stay close to 1 shrine per 5 villages, observed=$sampledRate")
     }
 
     private fun loadShrineTemplate(): CompoundTag {
