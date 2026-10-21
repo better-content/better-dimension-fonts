@@ -1,6 +1,5 @@
 package com.bettercontent.betterdimensionfonts.runtime.backend
 
-import com.mojang.logging.LogUtils
 import com.bettercontent.betterdimensionfonts.data.CanonicalTargetResolver
 import com.bettercontent.betterdimensionfonts.data.ObeliskDataManager
 import com.bettercontent.betterdimensionfonts.data.ObeliskDefinition
@@ -29,7 +28,6 @@ import kotlin.math.roundToInt
 object CanonicalDimensionBackend : RunWorldBackend {
     private const val SPAWN_CLEARANCE = 3
     private const val MAX_SAVED_SITES = 256
-    private val logger = LogUtils.getLogger()
     private val playerBindings = linkedMapOf<UUID, UUID>()
     private val configCache = linkedMapOf<String, BackendConfig>()
 
@@ -106,15 +104,6 @@ object CanonicalDimensionBackend : RunWorldBackend {
         record.ownerId = ownerId
         record.updatedGameTime = gameTime(server)
         markSiteDirty(server, immediate = true)
-        logger.info(
-            "Activated canonical font run site={} run={} target={} center={} origin={} {}",
-            record.siteId,
-            runId,
-            record.backendLevelKey.location(),
-            record.siteCenter,
-            record.originLevelKey?.location(),
-            record.originObeliskPos
-        )
         return ActiveSiteResult.Accepted(record.activeHandle() ?: return ActiveSiteResult.Rejected("site did not activate"), record.spawnPos ?: BlockPos.ZERO)
     }
 
@@ -174,13 +163,6 @@ object CanonicalDimensionBackend : RunWorldBackend {
         record.ownerId = null
         record.updatedGameTime = gameTime(server)
         markSiteDirty(server, immediate = true)
-        logger.info(
-            "Closed canonical font run site={} target={} center={} reason={}",
-            record.siteId,
-            record.backendLevelKey.location(),
-            record.siteCenter,
-            reason
-        )
     }
 
     override fun tick(server: MinecraftServer) = Unit

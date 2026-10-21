@@ -1,5 +1,24 @@
 # Better Dimension Fonts
 
+## Playtest logging
+
+`bc.playtest.better_dimension_fonts.lifecycle` observes preparation/activation/entry rejection,
+charged-and-bound entry and close cleanup. `.transport` distinguishes actual backend return
+from rejected/not-bound returns, including whether the existing run binding remains retryable.
+Existing run/origin UUIDs correlate preparation, entry, return and close, including rejection.
+Entry/return also carry the native participant UUID and current dimension/game tick. Callbacks
+holding only cached operation IDs do not query a world solely for context; unavailable IDs are
+honestly `UNKNOWN`. No traveler names, inventory or charge-tick stream is logged. `.rewards` reports
+the native currency-ejection schedule only after queue insertion, with burst count and causal source
+position/dimension/game tick. These bounded native UUIDs/positions are intentional, not an entity or
+per-block stream; no inventory contents or extra diagnostic registry/list probes are introduced. Duplicate legacy
+backend activation/close INFO records are removed; exact native fixture/parser witnesses remain
+unchanged. Close cleanup does not claim successful transport for every traveler. DEBUG/TRACE share
+120/minute (burst 20), 256 keys and 2,048-character records, with 30-second summaries. Startup INFO
+reports version/mode/limits and Celestial presence; unavailable source identity is `UNKNOWN`.
+Stop/disconnect clears transient diagnostics without rearming process allowances. Pure domain
+emitter/contracts supplement, not replace, absent-provider and native transport gates.
+
 ## Scope and authority
 
 This repository owns its mod-specific behavior and authoring inputs. Read [local instructions](AGENTS.md)

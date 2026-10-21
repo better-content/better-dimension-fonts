@@ -176,14 +176,6 @@ object RewardSystem {
     private fun scheduleCurrencyEjections(level: ServerLevel, pos: BlockPos, stacks: List<ItemStack>) {
         if (stacks.isEmpty()) return
         val burstCount = stacks.size
-        logger.info(
-            "Scheduling kill currency ejection at {} in {} item={} total={} bursts={}",
-            pos,
-            level.dimension().location(),
-            ForgeRegistries.ITEMS.getKey(stacks.first().item),
-            stacks.sumOf { it.count },
-            burstCount
-        )
         stacks.forEachIndexed { index, stack ->
             val delay = if (burstCount == 1) {
                 0
@@ -192,6 +184,10 @@ object RewardSystem {
             }
             pendingCurrencyEjections += ScheduledCurrencyEjection(level.dimension(), pos.immutable(), stack.copy(), delay)
         }
+        val log = com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG
+        if (log.enabled("rewards")) com.bettercontent.betterdimensionfonts.diagnostics.FeatureTelemetry.rewardEjection(log,
+            com.bettercontent.betterdimensionfonts.diagnostics.PlaytestLog.Context("server", level.dimension().location().toString(),
+                level.gameTime, "", "${pos.x},${pos.y},${pos.z}"), burstCount)
     }
 
     private fun insertIntoBufferOrEject(level: ServerLevel, pos: BlockPos, obelisk: ObeliskBlockEntity, stack: ItemStack) {

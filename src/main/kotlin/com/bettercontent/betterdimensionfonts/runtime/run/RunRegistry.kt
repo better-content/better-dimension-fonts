@@ -108,6 +108,12 @@ object RunRegistry : RunService {
             ReturnRunResult.NotBound,
             is ReturnRunResult.Rejected -> forcedCleanups++
         }
+        if (com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG.enabled("transport")) {
+            com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG.debug("transport", "font.return", playerContext(player),
+                if (result == ReturnRunResult.Returned) "returned" else "rejected",
+                when (result) { ReturnRunResult.Returned -> "native_transport"; ReturnRunResult.NotBound -> "not_bound"; else -> "backend_rejected" },
+                { com.bettercontent.betterdimensionfonts.diagnostics.PlaytestLog.fields("run", record?.id ?: "none", "binding_retained", result != ReturnRunResult.Returned && record != null) })
+        }
         persistOrClose(player.server, record, "player-return")
         return result == ReturnRunResult.Returned
     }
@@ -145,10 +151,12 @@ object RunRegistry : RunService {
     fun activateObelisk(player: ServerPlayer, obelisk: ObeliskBlockEntity, pos: BlockPos): String? {
         if (!obelisk.blockState.`is`(ModBlocks.OBELISK.get()) ||
             !obelisk.blockState.getValue(com.bettercontent.betterdimensionfonts.content.ObeliskBlock.BOUND)) {
+            outcome("font.activate", "rejected", "unbound_origin", originId = obelisk.obeliskId)
             return "This harvested font is unbound and cannot open an expedition."
         }
         val current = mutableRunForPlayer(player.uuid)
         if (current != null) {
+            outcome("font.activate", "rejected", "already_bound", current.id, obelisk.obeliskId)
             return if (current.obeliskId == obelisk.obeliskId) {
                 "You are already bound to this font."
             } else {
@@ -159,10 +167,12 @@ object RunRegistry : RunService {
         val existing = obelisk.activeRunId?.let(runs::get)
         if (existing != null) {
             if (existing.state != RunState.ACTIVE) {
+                outcome("font.join", "deferred", "interrupted_travelers_pending", existing.id, obelisk.obeliskId)
                 return "This dimensional font is waiting for interrupted travelers to reconnect."
             }
             val joinCost = obelisk.getJoinChargeCost()
             if (obelisk.chargeStored < joinCost) {
+                outcome("font.join", "rejected", "insufficient_charge", existing.id, obelisk.obeliskId)
                 return "The font needs ${joinCost.toInt()} charge to admit another traveler."
             }
             if (!FontChunkTicketManager.acquire(player.server, existing)) {
@@ -176,14 +186,16 @@ object RunRegistry : RunService {
         }
 
         if (runs.size >= MAX_ACTIVE_SESSIONS) {
-            logger.warn("Rejecting font teleport: active session limit reached sessions={}", runs.size)
+            outcome("font.activate", "rejected", "session_limit", originId = obelisk.obeliskId)
             return "Too many dimensional fonts are active right now."
         }
         val templateId = templateIdForDefinition(obelisk.definitionId)
         backend.validateTemplate(player.server, templateId)?.let {
+            outcome("font.activate", "rejected", "invalid_template", originId = obelisk.obeliskId)
             return "Cannot open ${displayName(obelisk.definitionId)}: $it"
         }
         if (obelisk.chargeStored < obelisk.getStartChargeCost()) {
+            outcome("font.activate", "rejected", "insufficient_charge", originId = obelisk.obeliskId)
             return "The font needs ${obelisk.getStartChargeCost().toInt()} charge to open."
         }
 
@@ -345,15 +357,18 @@ object RunRegistry : RunService {
         val prepared = when (val result = backend.requestPreparedSite(server, templateId, originLevelKey, originObeliskPos)) {
             is PreparedSiteResult.Accepted -> result.handle
             is PreparedSiteResult.Rejected -> {
-                logger.warn("Font backend rejected template={} reason={}", templateId, result.reason)
+                outcome("font.prepare", "rejected", "backend_rejected", runId, obeliskId)
                 return null
             }
         }
-        val ready = backend.pollPreparedSite(server, prepared) as? PreparedSiteStatus.Ready ?: return null
+        val ready = backend.pollPreparedSite(server, prepared) as? PreparedSiteStatus.Ready ?: run {
+            outcome("font.prepare", "deferred", "site_not_ready", runId, obeliskId)
+            return null
+        }
         val active = when (val result = backend.activateRun(server, prepared, runId, ownerId)) {
             is ActiveSiteResult.Accepted -> result
             is ActiveSiteResult.Rejected -> {
-                logger.warn("Font backend activation rejected run={} reason={}", runId, result.reason)
+                outcome("font.activate", "rejected", "backend_rejected", runId, obeliskId)
                 return null
             }
         }
@@ -387,13 +402,16 @@ object RunRegistry : RunService {
         chargeSource: ObeliskBlockEntity,
         entryCost: Double
     ): String {
-        val handle = activeHandle(server, record)
-            ?: return "The dimensional font destination is unavailable."
+        val handle = activeHandle(server, record) ?: run {
+            outcome("font.entry", "rejected", "destination_unavailable", record.id, record.obeliskId)
+            return "The dimensional font destination is unavailable."
+        }
         val companionSource = player.serverLevel()
         val companionSourcePos = player.position()
         return when (val result = backend.enterPlayer(player, handle)) {
             EnterRunResult.Entered -> {
                 if (!chargeSource.drainCharge(entryCost)) {
+                    outcome("font.entry", "rollback_requested", "charge_changed", record.id, record.obeliskId)
                     backend.returnPlayer(player)
                     backend.clearPlayer(player.uuid)
                     return "The font no longer has enough charge."
@@ -408,12 +426,15 @@ object RunRegistry : RunService {
                 refreshSpawnPos(server, record)
                 RunSavedData.get(server).upsert(record)
                 totalEntries++
+                if (com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG.enabled("lifecycle"))
+                    com.bettercontent.betterdimensionfonts.diagnostics.FeatureTelemetry.entry(com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG, playerContext(player), record.id, true)
                 FontCompanions.onEnter(player, companionSource, companionSourcePos)
                 postFontEnterEvent(player, record)
                 "Drinking from ${displayName(record.definitionId)}..."
             }
             is EnterRunResult.Rejected -> {
-                logger.warn("Rejected player {} entry run={} reason={}", player.gameProfile.name, record.id, result.reason)
+                if (com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG.enabled("lifecycle"))
+                    com.bettercontent.betterdimensionfonts.diagnostics.FeatureTelemetry.entry(com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG, playerContext(player), record.id, false)
                 "The dimensional font destination is unavailable: ${result.reason}"
             }
         }
@@ -440,6 +461,8 @@ object RunRegistry : RunService {
                 } finally {
                     returningPlayers -= playerId
                 }
+                outcome("font.close_transport", if (result == ReturnRunResult.Returned) "returned" else "rejected",
+                    if (result == ReturnRunResult.Returned) "native_transport" else "backend_not_returned", record.id, record.obeliskId)
                 if (result == ReturnRunResult.Returned) {
                     FontCompanions.onReturn(player, companionSource)
                     if (returnContext != null) postAggregateReturnEvent(player, record, returnContext)
@@ -456,7 +479,18 @@ object RunRegistry : RunService {
         activeHandle(server, record)?.let { backend.destroyRun(server, it, reason) }
         runs.remove(runId)
         RunSavedData.get(server).remove(runId)
+        outcome("font.close", "bindings_cleared", reason, runId, record.obeliskId)
         return true
+    }
+
+    private fun playerContext(player: ServerPlayer) = com.bettercontent.betterdimensionfonts.diagnostics.PlaytestLog.Context(
+        "server", player.serverLevel().dimension().location().toString(), player.serverLevel().gameTime, player.uuid.toString(), "")
+
+    private fun outcome(event: String, result: String, reason: String, runId: UUID? = null, originId: UUID? = null) {
+        val log = com.bettercontent.betterdimensionfonts.PlaytestDiagnostics.LOG
+        // These callbacks may hold only cached run/origin identities; do not resolve a world solely for logging.
+        if (log.enabled("lifecycle")) log.event("lifecycle", event, "server", result, reason,
+            { com.bettercontent.betterdimensionfonts.diagnostics.PlaytestLog.fields("run", runId ?: "UNKNOWN", "origin", originId ?: "UNKNOWN") })
     }
 
     private fun persistOrClose(server: MinecraftServer, record: RunRecord?, reason: String) {
