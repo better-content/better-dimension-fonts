@@ -19,11 +19,7 @@ reports version/mode/limits and Celestial presence; unavailable source identity 
 Stop/disconnect clears transient diagnostics without rearming process allowances. Pure domain
 emitter/contracts supplement, not replace, absent-provider and native transport gates.
 
-## Scope and authority
-
-This repository owns its mod-specific behavior and authoring inputs. Read [local instructions](AGENTS.md)
-and the [shared documentation/policy index](../../better-content-modpack/docs/README.md).
-
+## Scope
 
 Pack-owned obelisk and charge-font worldgen/runtime mod for Forge `1.20.1`.
 
@@ -53,9 +49,7 @@ During the active task, each GameTest invocation keeps its generated world, logs
 `build/gametest/<run-id>/`. The gate compares actual runtime registration and
 successful completion against the reviewed IDs in `gametest/profiles/`, rejects
 missing or incomplete evidence, and records the selected profile and run ID.
-Inspect failed evidence during diagnosis. A later run uses a new fixture; retain previous
-worlds/reports and caches/build outputs across handoffs by default under the shared
-[retention policy](../../better-content-modpack/docs/policies/generated-data.md). Finishing activity deletes nothing. Runtime charge scenarios
+Runtime charge scenarios
 use deterministic modifier fixtures and separate batches; worldgen scenarios
 prepare their terrain and worldgen heightmaps explicitly. `verifyFast` also runs
 12 negative execution-evidence checks without starting Forge.
