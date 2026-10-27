@@ -810,6 +810,18 @@ object ObeliskGameTestSupport {
             obelisk.regenerateCharge(obelisk.getMaxChargeStored())
 
             waitForPreparedTemplate(helper, "end") {
+                val hit = BlockHitResult(Vec3.atCenterOf(obeliskPos), Direction.UP, obeliskPos, false)
+                val chargeBefore = obelisk.chargeStored
+                player.setItemInHand(InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK, 2))
+                helper.assertTrue(ModBlocks.OBELISK.get().use(helper.level.getBlockState(obeliskPos), helper.level,
+                    obeliskPos, player, InteractionHand.MAIN_HAND, hit) == InteractionResult.PASS,
+                    "Expected held-item Font use to pass through")
+                helper.assertTrue(obelisk.activeRunId == null && obelisk.chargeStored == chargeBefore,
+                    "Expected held-item rejection not to create a run or debit charge")
+                helper.assertTrue(player.mainHandItem.count == 2, "Expected held item not to be consumed")
+                player.setItemInHand(InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY)
+                // Crouching is allowed at the origin Font, unlike the return seal.
+                player.setShiftKeyDown(true)
                 val activationResult = ModBlocks.OBELISK.get().use(
                     helper.level.getBlockState(obeliskPos),
                     helper.level,
@@ -823,6 +835,7 @@ object ObeliskGameTestSupport {
                     "Expected charged obelisk activation to consume the interaction"
                 )
 
+                player.setShiftKeyDown(false)
                 waitUntil(helper, 220, "Expected charged obelisk activation to create a run record", condition = {
                     client.pump(server)
                     val liveObelisk = helper.level.getBlockEntity(obeliskPos) as? ObeliskBlockEntity
@@ -856,7 +869,26 @@ object ObeliskGameTestSupport {
                         helper.assertTrue(enterEvent.definitionId.toString() == "better_dimension_fonts:end", "Expected Font enter event to identify the Font definition")
                         helper.assertTrue(enterEvent.targetDimension == Level.END, "Expected Font enter event to identify the transported destination")
                         helper.assertTrue(enterEvent.aggregateId.toString() == "minecraft:end_stone", "Expected End Font event to identify end stone aggregate")
-                        helper.assertTrue(RunRegistry.finishRun(server, runId), "Expected activation test cleanup to finish the run")
+                        val returnPos = player.blockPosition().below()
+                        val returnLevel = player.serverLevel()
+                        val seal = ModBlocks.RETURN_FONT.get()
+                        returnLevel.setBlock(returnPos, seal.defaultBlockState(), 3)
+                        val sealHit = BlockHitResult(Vec3.atCenterOf(returnPos), Direction.UP, returnPos, false)
+                        fun useSeal() = seal.use(returnLevel.getBlockState(returnPos), returnLevel, returnPos,
+                            player, InteractionHand.MAIN_HAND, sealHit)
+                        player.setItemInHand(InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK))
+                        helper.assertTrue(useSeal() == InteractionResult.PASS, "Expected held-item return seal to pass through")
+                        player.setItemInHand(InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY)
+                        player.setShiftKeyDown(true)
+                        helper.assertTrue(useSeal() == InteractionResult.PASS, "Expected crouched return seal to pass through")
+                        helper.assertTrue(fontEvents.returns.isEmpty(), "Expected denied seal uses not to return the traveler")
+                        player.setShiftKeyDown(false)
+                        helper.assertTrue(useSeal() == InteractionResult.CONSUME, "Expected empty-hand seal use to consume interaction")
+                        helper.assertTrue(fontEvents.returns.size == 1, "Expected seal use to return the bound traveler exactly once")
+                        helper.assertTrue(useSeal() == InteractionResult.CONSUME, "Expected unassigned seal use to be handled safely")
+                        helper.assertTrue(fontEvents.returns.size == 1, "Expected unassigned seal not to invent another return")
+                        helper.assertTrue(RunRegistry.get(runId) == null || RunRegistry.finishRun(server, runId),
+                            "Expected return seal to close the last traveler's run or allow cleanup")
                         waitUntil(helper, 1200, "Expected activation test cleanup to remove the run", condition = {
                             client.pump(server)
                             RunRegistry.get(runId) == null
@@ -892,11 +924,27 @@ object ObeliskGameTestSupport {
             helper.level.setBlock(obeliskPos, ModBlocks.OBELISK.get().defaultBlockState(), 3)
             val obelisk = helper.level.getBlockEntity(obeliskPos) as? ObeliskBlockEntity
                 ?: error("Expected placed obelisk block entity to exist")
+            val unboundCharge = obelisk.chargeStored
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
+            helper.assertTrue(ModBlocks.OBELISK.get().use(helper.level.getBlockState(obeliskPos), helper.level,
+                obeliskPos, player, InteractionHand.MAIN_HAND,
+                BlockHitResult(Vec3.atCenterOf(obeliskPos), Direction.UP, obeliskPos, false)) == InteractionResult.CONSUME,
+                "Expected unbound Font use to be handled without granting admission")
+            helper.assertTrue(obelisk.activeRunId == null && obelisk.chargeStored == unboundCharge,
+                "Expected unbound Font not to authorize a run or consume charge")
             prepareTestObelisk(obelisk)
 
             waitForPreparedTemplate(helper, "end") {
                 val requiredCharge = kotlin.math.ceil(obelisk.getStartChargeCost()).toInt()
                 obelisk.setChargeStoredForDebug(requiredCharge - 1)
+                player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
+                player.setShiftKeyDown(false)
+                helper.assertTrue(ModBlocks.OBELISK.get().use(helper.level.getBlockState(obeliskPos), helper.level,
+                    obeliskPos, player, InteractionHand.MAIN_HAND,
+                    BlockHitResult(Vec3.atCenterOf(obeliskPos), Direction.UP, obeliskPos, false)) == InteractionResult.CONSUME,
+                    "Expected normal empty-hand Font use to be handled even when charge is insufficient")
+                helper.assertTrue(obelisk.activeRunId == null && obelisk.chargeStored == (requiredCharge - 1).toDouble(),
+                    "Expected rejected block use not to start a run or debit charge")
                 val rejected = RunRegistry.activateObelisk(player, obelisk, obeliskPos)
                 helper.assertTrue(
                     rejected?.contains("charge to open") == true,
