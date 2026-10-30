@@ -168,6 +168,31 @@ object ObeliskCommands {
                         }
                     })
             )
+            root.then(Commands.literal("harness_abandon").executes { ctx ->
+                val player = ctx.source.playerOrException
+                check(RunRegistry.abandonForHarness(player)) { "harness Font run could not be closed without return travel" }
+                logger.info("BC_FONT_HARNESS_ABANDON player={} dimension={}",
+                    player.gameProfile.name, player.serverLevel().dimension().location())
+                1
+            })
+            root.then(Commands.literal("harness_refill").executes { ctx ->
+                val player = ctx.source.playerOrException
+                val handle = RunRegistry.getRun(player.uuid) ?: error("harness refill requires an active Font run")
+                val record = RunRegistry.get(handle.runId) ?: error("harness refill run record is missing")
+                check(record.backendLevelKey == player.serverLevel().dimension()) {
+                    "harness refill requires the player to remain inside the active Font"
+                }
+                val origin = requireNotNull(record.originLevelKey?.let(ctx.source.server::getLevel)) {
+                    "harness refill origin level is unavailable"
+                }
+                val pos = requireNotNull(record.originObeliskPos) { "harness refill origin is unavailable" }
+                val obelisk = origin.getBlockEntity(pos) as? ObeliskBlockEntity
+                    ?: error("harness refill origin Font is missing at $pos")
+                check(obelisk.activeRunId == handle.runId) { "harness refill origin Font is not owned by this run" }
+                obelisk.fillToCapacity()
+                logger.info("BC_FONT_HARNESS_REFILL player={} template={} origin={}", player.gameProfile.name, handle.definitionId, pos)
+                1
+            })
             root.then(Commands.literal("harness_return").executes { ctx ->
                 val player = ctx.source.playerOrException
                 val run = RunRegistry.getRun(player.uuid) ?: error("harness return requires an active Font run")

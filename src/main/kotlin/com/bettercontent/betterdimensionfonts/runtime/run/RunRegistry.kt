@@ -75,6 +75,20 @@ object RunRegistry : RunService {
             "players=${playerRunIds.size} tickets=${FontChunkTicketManager.activeTicketCount()} " +
             "entries=$totalEntries returns=$totalReturns forcedCleanups=$forcedCleanups"
 
+    /** Test-only unbind without a return teleport: remote-chunk Tele Soak must never
+     * re-enter its already visited origin chunk. This cannot be called in production. */
+    fun abandonForHarness(player: ServerPlayer): Boolean {
+        check(System.getProperty("bc.pack_test.debug") == "true") { "harness Font abandonment is disabled" }
+        val record = mutableRunForPlayer(player.uuid) ?: return false
+        check(player.uuid in record.activePlayers && record.backendLevelKey == player.serverLevel().dimension()) {
+            "harness abandonment requires the player inside the active Font"
+        }
+        detachPlayer(record, player.uuid, disqualify = true)
+        backend.clearPlayer(player.uuid)
+        persistOrClose(player.server, record, "harness-remote-chunk-exit")
+        return playerRunIds[player.uuid] == null
+    }
+
     fun returnPlayer(player: ServerPlayer, disqualify: Boolean = true): Boolean {
         val record = mutableRunForPlayer(player.uuid)
         val companionSource = player.serverLevel()
