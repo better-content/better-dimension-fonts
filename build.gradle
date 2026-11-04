@@ -54,7 +54,7 @@ def betterContentJar = { String repository, String artifact ->
 repositories {
     ivy {
         name = 'betterGameplayNoticesLocal'
-        url = uri(betterContentJar('better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar').parentFile)
+        url = uri(betterContentJar('better-gameplay-notices', 'better-gameplay-notices-1.0.1.jar').parentFile)
         patternLayout { artifact('[artifact]-[revision].[ext]') }
         metadataSources { artifact() }
         content { includeGroup('bettercontent.notices.local') }
@@ -104,7 +104,7 @@ dependencies {
     // Forge dev runs load declared mandatory dependencies from runtimeOnly; testRuntimeOnly
     // alone is not part of the GameTestServer launch classpath.
     runtimeOnly fg.deobf('bettercontent.local:better-compat-fixes:0.1.9')
-    runtimeOnly fg.deobf('bettercontent.notices.local:better-gameplay-notices:1.0.0')
+    runtimeOnly fg.deobf('bettercontent.notices.local:better-gameplay-notices:1.0.1')
     // Better Content Fixes uses MixinExtras at runtime. The provider's reobfuscated
     // development JAR does not expose that nested dependency to ForgeGradle runs.
     runtimeOnly 'io.github.llamalad7:mixinextras-forge:0.5.4'
@@ -280,7 +280,7 @@ tasks.register('prepareCelestialVisualHarness') {
         }
         launch.providers = [
             'better-celestial-events': ['better-celestial-events', 'better-celestial-events-0.1.0.jar'],
-            'better-gameplay-notices': ['better-gameplay-notices', 'better-gameplay-notices-1.0.0.jar'],
+            'better-gameplay-notices': ['better-gameplay-notices', 'better-gameplay-notices-1.0.1.jar'],
             'better-compat-fixes': ['better-compat-fixes', 'better-compat-fixes-0.1.9.jar']
         ].collectEntries { id, artifact ->
             def jar = betterContentJar(artifact[0], artifact[1])
