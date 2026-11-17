@@ -10,7 +10,7 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
-  "salienceAspects": ["work", "tempo", "robustness", "renewal"],
+  "salienceAspects": ["power", "motion", "endurance", "renewal"],
   "cultivationPalette": {
     "pathBlocks": ["minecraft:oxidized_cut_copper", "the_bumblezone:ancient_wax_bricks"],
     "cultivationBlocks": ["minecraft:oxidized_copper"],

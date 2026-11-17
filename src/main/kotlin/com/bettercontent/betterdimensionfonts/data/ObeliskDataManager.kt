@@ -271,7 +271,6 @@ object ObeliskDataManager {
 
     private val ALWAYS_AVAILABLE_NAMESPACES = setOf("minecraft", "forge", MOD_ID)
     private val SALIENCE_ASPECTS = setOf(
-        "impact", "tempo", "work", "mobility",
-        "endurance", "robustness", "renewal", "control"
+        "power", "motion", "endurance", "renewal", "control"
     )
 }
