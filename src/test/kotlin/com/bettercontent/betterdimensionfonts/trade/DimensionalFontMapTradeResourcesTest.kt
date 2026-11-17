@@ -65,6 +65,26 @@ class DimensionalFontMapTradeResourcesTest {
     }
 
     @Test
+    fun changingSellerThemePrunesPreviouslySoldTypesOutsideTheNewTheme() {
+        val sellerData = CompoundTag().apply {
+            put("better_dimension_fonts:font_map_sold_types", ListTag().apply {
+                add(StringTag.valueOf("overworld"))
+                add(StringTag.valueOf("nether"))
+            })
+        }
+
+        DimensionalFontMapTrades.setSellerDefinitionIds(sellerData, setOf("nether", "end"))
+
+        assertEquals(setOf("nether"), DimensionalFontMapTrades.soldDefinitionIds(sellerData))
+        assertEquals(
+            emptySet(),
+            DimensionalFontMapTrades.advanceSoldTypes(
+                DimensionalFontMapTrades.soldDefinitionIds(sellerData), "end", setOf("nether", "end")
+            )
+        )
+    }
+
+    @Test
     fun authoredOfferUsesTheSellerSuppliedCurrencyAndKeepsFontIdentity() {
         TestMinecraftBootstrap.bootstrap()
         val currency = Items.AMETHYST_SHARD

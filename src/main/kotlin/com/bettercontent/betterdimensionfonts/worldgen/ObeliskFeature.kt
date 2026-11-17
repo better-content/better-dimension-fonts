@@ -3388,7 +3388,7 @@ class ObeliskFeature(codec: Codec<NoneFeatureConfiguration>) : Feature<NoneFeatu
                 if (pos.y < level.minBuildHeight || pos.y >= level.maxBuildHeight) {
                     false
                 } else {
-                    placements += PlannedPlacement(pos.immutable(), state, flags)
+                    placements += PlannedPlacement(pos.immutable(), FontConstructionPalette.state(state), flags)
                     true
                 }
             }
@@ -3433,7 +3433,7 @@ class ObeliskFeature(codec: Codec<NoneFeatureConfiguration>) : Feature<NoneFeatu
             var placedInChunk = false
             val chunkLocalSetBlock = { pos: BlockPos, state: BlockState, flags: Int ->
                 if (isInsideChunkBounds(pos, chunk) && level.ensureCanWrite(pos)) {
-                    val placed = level.setBlock(pos, state, flags)
+                    val placed = level.setBlock(pos, FontConstructionPalette.state(state), flags)
                     placedInChunk = placedInChunk || placed
                     placed
                 } else {

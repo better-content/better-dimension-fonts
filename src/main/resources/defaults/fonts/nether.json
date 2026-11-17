@@ -10,7 +10,7 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
-  "salienceAspects": ["impact", "endurance"],
+  "salienceAspects": ["power", "endurance"],
   "cultivationPalette": {
     "pathBlocks": ["minecraft:oxidized_cut_copper", "minecraft:nether_bricks"],
     "cultivationBlocks": ["minecraft:oxidized_copper"],

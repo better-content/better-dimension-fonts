@@ -420,7 +420,8 @@ object DimensionalFontSiteGenerator {
             state.`is`(Blocks.PACKED_MUD)
 
     private fun setBoxed(level: WorldGenLevel, box: BoundingBox, pos: BlockPos, state: BlockState): Boolean =
-        box.isInside(pos) && level.setBlock(pos, state, UPDATE_FLAGS)
+        box.isInside(pos) && level.setBlock(pos,
+            com.bettercontent.betterdimensionfonts.worldgen.FontConstructionPalette.state(state), UPDATE_FLAGS)
 
     private fun courtState(siteSeed: Long, pos: BlockPos): BlockState {
         val block = if (Math.floorMod(coordinateHash(siteSeed, pos.x, pos.z, 0x43a7L), 5L) == 0L) {

@@ -229,10 +229,10 @@ object CanonicalDimensionBackend : RunWorldBackend {
             val corner = kotlin.math.abs(offset.x) == ArrivalSiteLayout.FLOOR_RADIUS &&
                 kotlin.math.abs(offset.z) == ArrivalSiteLayout.FLOOR_RADIUS
             level.setBlock(floorPos,
-                if (submerged && corner) Blocks.SOUL_SAND.defaultBlockState() else Blocks.OXIDIZED_COPPER.defaultBlockState(), 3)
+                if (submerged && corner) Blocks.SOUL_SAND.defaultBlockState() else Blocks.STONE_BRICKS.defaultBlockState(), 3)
             var supportPos = floorPos.below()
             while (supportPos.y >= level.minBuildHeight && !level.getBlockState(supportPos).isSolid) {
-                level.setBlock(supportPos, Blocks.OXIDIZED_COPPER.defaultBlockState(), 3)
+                level.setBlock(supportPos, Blocks.STONE_BRICKS.defaultBlockState(), 3)
                 supportPos = supportPos.below()
             }
             if (!submerged) {

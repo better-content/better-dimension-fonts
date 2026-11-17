@@ -10,7 +10,7 @@
   "enabled": true,
   "worldgenWeight": 1.0,
   "worldgenFamilyId": "altar",
-  "salienceAspects": ["mobility", "renewal"],
+  "salienceAspects": ["motion", "renewal"],
   "cultivationPalette": {
     "pathBlocks": ["minecraft:oxidized_cut_copper", "aether:holystone_bricks"],
     "cultivationBlocks": ["minecraft:oxidized_copper"],
