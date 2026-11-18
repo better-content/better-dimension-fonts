@@ -14,7 +14,7 @@ class NativeDiagnosticsTest(unittest.TestCase):
     def setUp(self):
         self.header = 'Configuration file /fresh/config/font-common.toml is not correct. Correcting'
         self.key = 'Incorrect key charge.minimum was corrected from null to its default, 600. '
-        self.metadata = {'directory': '/fresh', 'dist': 'DEDICATED_SERVER', 'mods': {'forge': '47.4.13'},
+        self.metadata = {'directory': '/fresh', 'dist': 'DEDICATED_SERVER', 'mods': {'forge': '47.4.22'},
                          'corrections': {self.header: [self.key]}}
 
     def test_actual_pinned_native_inputs_and_tamper_rejection(self):
@@ -191,7 +191,7 @@ class OptionalNativeProbeTest(unittest.TestCase):
         self.assertTrue(d.scan_operations([record('Failed to read required save data', level='DEBUG')])[0])
 
     def test_public_inspect_reports_probe_categories_and_still_blocks_following_error(self):
-        metadata = {'dist': 'DEDICATED_SERVER', 'mods': {'forge': '47.4.13'}, 'corrections': {}}
+        metadata = {'dist': 'DEDICATED_SERVER', 'mods': {'forge': '47.4.22'}, 'corrections': {}}
         lines = self.netty() + [self.jarjar()]
         failures, counts = d.inspect(lines, metadata)
         self.assertEqual([], failures)

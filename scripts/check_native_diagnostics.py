@@ -14,16 +14,16 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = Path.home() / '.gradle/caches'
-VERSION = '1.20.1-47.4.13'
+VERSION = '1.20.1-47.4.22'
 # Minecraft 1.20.1's native library manifest pins SHA-1 022d148e...;
 # Gradle renders that digest directory without its leading zero.
 NETTY_SHA1 = '22d148e85c3f5ebdacc0ce1f5aabb1d420f73f3'
 NETTY = CACHE / 'modules-2/files-2.1/io.netty/netty-common/4.1.82.Final' / NETTY_SHA1 / 'netty-common-4.1.82.Final.jar'
 MAPPED = CACHE / 'forge_gradle/minecraft_user_repo/net/minecraftforge/forge' / (VERSION + '_mapped_official_1.20.1') / ('forge-' + VERSION + '_mapped_official_1.20.1.jar')
-LANGUAGES = {'javafmllanguage': 'cf01e2179f72bd2829c65f5226d7dd0cfb6c686',
-             'lowcodelanguage': 'e3f96129ea14eba84316f2d69816253e228e6e4c',
-             'mclanguage': '85796906112d9b621a7b2996f8bfda49da991ef0',
-             'fmlcore': 'f77e3021d1eb31d61f8d1b92d18ed4fb3c2806e5'}
+LANGUAGES = {'javafmllanguage': 'c3fe3323c9f8651aff7b34a665730c312b9e203f',
+             'lowcodelanguage': 'c719255918fe74052292279a1242a26fbe92452a',
+             'mclanguage': '78b273bf6a3b42e430cd60ca1636656ae5993d6c',
+             'fmlcore': '1367fc72fd188372dd79e824c611e248dcd000e'}
 TARGETS = {
  'slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity': ('tconstruct', 'tconstruct.PartBuilderBlockEntityMixin', '167ed1a4c24560cc35b4e7b4d370aa92b98212dd0dc8f7999921575117bb1e9a'),
  'slimeknights.tconstruct.tables.block.entity.inventory.PartBuilderContainerWrapper': ('tconstruct', 'tconstruct.PartBuilderContainerWrapperMixin', '35878ff70f15800b6de1b5ae07c58f06d886f7d316823a24e88ed331f929d426'),
@@ -129,9 +129,9 @@ def validate_inputs(client=False):
             'net/minecraft/server/dedicated/DedicatedServer.class': 'ff3419741829f8ef4359e7dda8093252c4bce0a4f3ee02da001f1da5ea868228'
         }.items():
             check_hash(jar.read(name), digest)
-    with zipfile.ZipFile(module_file('fmlloader', 'b27b57b2f641bfe6ecdaf206ee54880d26bb9c10')) as jar:
+    with zipfile.ZipFile(module_file('fmlloader', 'ce9a2a24e7b3039263e3702374b50dfcf2171c6a')) as jar:
         check_hash(jar.read('net/minecraftforge/fml/loading/FMLConfig.class'), '65ac0669310f3a98e1de85654c124f535acacd721f7bfeec80db3001d3ef2cd0')
-        check_hash(jar.read('net/minecraftforge/fml/loading/moddiscovery/ModFileParser.class'), 'bdfe1926139ccdb5cf69570a5985e560d925dd3f5c99d552f4e5adac674888a4')
+        check_hash(jar.read('net/minecraftforge/fml/loading/moddiscovery/ModFileParser.class'), 'cd22bc9b84fecd997b60e42e9a667bc0c4c3a65469500aa6a9f683829072389c')
     with zipfile.ZipFile(provider('better-compat-fixes', 'better-compat-fixes-0.1.9.jar')) as jar:
         validate_compat_inputs(jar, client_targets={TARGETS[target][1] for target in CLIENT_TARGETS})
     with zipfile.ZipFile(provider('better-celestial-events', 'better-celestial-events-0.1.0.jar')) as jar:
@@ -298,7 +298,7 @@ def scan_operations(lines):
 
 
 def inspect(lines, metadata):
-    if metadata.get('dist') not in ('CLIENT', 'DEDICATED_SERVER') or metadata['mods'].get('forge') != '47.4.13':
+    if metadata.get('dist') not in ('CLIENT', 'DEDICATED_SERVER') or metadata['mods'].get('forge') != '47.4.22':
         raise ValueError('Undeclared native fixture/version')
     lines = list(lines)
     failures, counts = scan_operations(lines)

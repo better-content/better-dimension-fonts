@@ -51,7 +51,7 @@ class ObeliskDataGameTests {
             val floorPos = floor.offset(dx, 0, dz)
             val corner = kotlin.math.abs(dx) == 2 && kotlin.math.abs(dz) == 2
             helper.assertTrue(helper.level.getBlockState(floorPos).`is`(
-                if (corner) Blocks.SOUL_SAND else Blocks.OXIDIZED_COPPER), "Incorrect arrival floor at $floorPos")
+                if (corner) Blocks.SOUL_SAND else Blocks.STONE_BRICKS), "Incorrect arrival floor at $floorPos")
             for (dy in 2..7) {
                 helper.assertTrue(!helper.level.getBlockState(floorPos.above(dy)).isAir,
                     "Underwater arrival introduced an air pocket at ${floorPos.above(dy)}")

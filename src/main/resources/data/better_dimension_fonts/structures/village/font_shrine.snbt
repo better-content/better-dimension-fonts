@@ -118,16 +118,16 @@
   palette: [
     {Name: "minecraft:air"},
     {Name: "minecraft:jigsaw", Properties: {orientation: "north_up"}},
-    {Name: "minecraft:stone_bricks"},
-    {Name: "minecraft:stone_bricks"},
+    {Name: "minecraft:waxed_copper_block"},
+    {Name: "minecraft:waxed_cut_copper"},
     {Name: "minecraft:packed_mud"},
-    {Name: "minecraft:deepslate_tile_stairs", Properties: {facing: "south", half: "bottom", shape: "straight", waterlogged: "false"}},
-    {Name: "minecraft:deepslate_tile_stairs", Properties: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}},
-    {Name: "minecraft:deepslate_tile_stairs", Properties: {facing: "east", half: "bottom", shape: "straight", waterlogged: "false"}},
-    {Name: "minecraft:deepslate_tile_stairs", Properties: {facing: "west", half: "bottom", shape: "straight", waterlogged: "false"}},
+    {Name: "minecraft:waxed_cut_copper_stairs", Properties: {facing: "south", half: "bottom", shape: "straight", waterlogged: "false"}},
+    {Name: "minecraft:waxed_cut_copper_stairs", Properties: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}},
+    {Name: "minecraft:waxed_cut_copper_stairs", Properties: {facing: "east", half: "bottom", shape: "straight", waterlogged: "false"}},
+    {Name: "minecraft:waxed_cut_copper_stairs", Properties: {facing: "west", half: "bottom", shape: "straight", waterlogged: "false"}},
     {Name: "minecraft:stripped_warped_stem", Properties: {axis: "x"}},
     {Name: "minecraft:stripped_warped_stem", Properties: {axis: "y"}},
-    {Name: "minecraft:deepslate_tile_slab", Properties: {type: "bottom", waterlogged: "false"}},
+    {Name: "minecraft:waxed_cut_copper_slab", Properties: {type: "bottom", waterlogged: "false"}},
     {Name: "better_dimension_fonts:dimensional_font", Properties: {bound: "true", waterlogged: "false"}},
     {Name: "minecraft:soul_lantern", Properties: {hanging: "true", waterlogged: "false"}}
   ]

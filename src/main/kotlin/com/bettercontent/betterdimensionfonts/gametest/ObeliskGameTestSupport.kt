@@ -1428,14 +1428,14 @@ object ObeliskGameTestSupport {
             obelisk?.definitionId == definition.id,
             "Expected structure-piece generated obelisk to keep its definition id"
         )
-        assertGeneratedAltar(helper, fontPos, "structure-piece", requireReliquaryLandscaping = false,
+        assertGeneratedAltar(helper, fontPos, "structure-piece", requireReliquaryLandscaping = false, masonry = true,
             requireNoWaterPools = true)
         Direction.Plane.HORIZONTAL.forEach { direction ->
             DimensionalFontSiteGenerator.altarApproachStairPositions(altarCenter, direction).forEach { stairPos ->
                 val stair = helper.level.getBlockState(stairPos)
                 helper.assertTrue(
-                    stair.`is`(Blocks.OXIDIZED_CUT_COPPER_STAIRS),
-                    "Expected layout-v4 oxidized altar approach stair at $stairPos"
+                    stair.`is`(Blocks.DEEPSLATE_TILE_STAIRS),
+                    "Expected layout-v4 masonry altar approach stair at $stairPos"
                 )
                 helper.assertTrue(
                     stair.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction.opposite,
@@ -1583,7 +1583,7 @@ object ObeliskGameTestSupport {
                 val distinctFonts = generatedFonts.distinct()
                 helper.assertTrue(distinctFonts.isNotEmpty(), "Expected generated overworld chunks to accept dimensional font cultivation center placement in sampled chunks")
                 distinctFonts.forEachIndexed { fontIndex, fontPos ->
-                    assertGeneratedAltar(helper, fontPos, "generated-overworld-$fontIndex", requireBroadLowerStep = false)
+                    assertGeneratedAltar(helper, fontPos, "generated-overworld-$fontIndex", requireBroadLowerStep = false, masonry = true)
                 }
                 releaseTerrain()
                 helper.succeed()
@@ -2305,7 +2305,8 @@ object ObeliskGameTestSupport {
         expectedTrophyOverride: net.minecraft.world.level.block.Block? = null,
         requireDimensionalTrophy: Boolean = false,
         requireReliquaryLandscaping: Boolean = true,
-        requireNoWaterPools: Boolean = false
+        requireNoWaterPools: Boolean = false,
+        masonry: Boolean = false
     ) {
         val baseCenter = fontPos.below()
         val middleTierCenter = baseCenter.below()
@@ -2322,19 +2323,18 @@ object ObeliskGameTestSupport {
             obelisk?.chargeStored == obelisk?.getModifiedMaxStorage()?.toDouble(),
             "Expected $label generated cultivation center font to be filled to its effective capacity"
         )
+        // Structure/template generation remaps historical copper palettes to
+        // masonry; direct definition generation retains its authored copper.
+        // Neither path rewrites existing placed fonts.
+        val pedestal = helper.level.getBlockState(baseCenter)
         helper.assertTrue(
-            if (requireReliquaryLandscaping) {
-                helper.level.getBlockState(baseCenter).`is`(Blocks.RAW_COPPER_BLOCK) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.COPPER_BLOCK) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_COPPER) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_COPPER) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.CUT_COPPER) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.EXPOSED_CUT_COPPER) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.WEATHERED_CUT_COPPER) ||
-                    helper.level.getBlockState(baseCenter).`is`(Blocks.OXIDIZED_COPPER)
-            } else helper.level.getBlockState(baseCenter).`is`(Blocks.OXIDIZED_COPPER),
-            "Expected $label font to sit on a copper pedestal, found ${helper.level.getBlockState(baseCenter)} at $baseCenter"
-        )
+            if (masonry) pedestal.`is`(Blocks.STONE_BRICKS)
+            else if (requireReliquaryLandscaping) listOf(Blocks.RAW_COPPER_BLOCK, Blocks.COPPER_BLOCK,
+                Blocks.EXPOSED_COPPER, Blocks.WEATHERED_COPPER, Blocks.CUT_COPPER,
+                Blocks.EXPOSED_CUT_COPPER, Blocks.WEATHERED_CUT_COPPER, Blocks.OXIDIZED_COPPER)
+                .any { pedestal.`is`(it) }
+            else pedestal.`is`(Blocks.OXIDIZED_COPPER),
+            "Expected $label font pedestal, found $pedestal at $baseCenter")
         helper.assertTrue(!helper.level.getBlockState(baseCenter).isAir, "Expected $label altar cap not to float")
         helper.assertTrue(!helper.level.getBlockState(middleTierCenter).isAir, "Expected $label font to sit on an elevated altar middle tier")
         helper.assertTrue(!helper.level.getBlockState(lowerTierCenter).isAir, "Expected $label font to sit on an elevated altar lower tier")
